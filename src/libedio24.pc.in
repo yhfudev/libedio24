@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libedio24
+URL: https://github.com/yhfudev/libedio24.git
+Description: A network library to control E-DIO24 devices
+Version: @PACKAGE_VERSION@
+Requires: 
+Libs: -L${libdir} -ledio24
+Cflags: -I${includedir}
+

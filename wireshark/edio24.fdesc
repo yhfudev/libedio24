@@ -1,0 +1,261 @@
+## @file    edio24.fdesc
+## @brief   E-DIO24 protocol decoder with wireshark Generic Dissector
+## @author  yhfudev@gmail.com
+## @version 1.0
+## @date    2017-10-18
+##
+## This is an decoder for E-DIO24 protocol with Generic Dissector.
+
+###############################################################################
+# Message identifier
+###############################################################################
+
+enum8 T_command
+{
+  # Digital I/O Commands
+  CMD_DIN_R    0x00  # Read  DIO pins
+  CMD_DOUT_R   0x02  # Read  DIO latch value
+  CMD_DOUT_W   0x03  # Write DIO latch value
+  CMD_DCONF_R  0x04  # Read  DIO configuration value
+  CMD_DCONF_W  0x05  # Write DIO Configuration value
+
+  # Counter Commands
+  CMD_COUNTER_R  0x30  #  Read event counter
+  CMD_COUNTER_W  0x31  #  Reset event counter
+
+  # Memory Commands
+  CMD_CONF_MEM_R       0x40  #  Read configuration memeory
+  CMD_CONF_MEM_W       0x41  #  Write configuration memory
+  CMD_USR_MEM_R        0x42  #  Read user memory  
+  CMD_USR_MEM_W        0x43  #  Write user memory
+  CMD_SET_MEM_R        0x44  #  Read settings memory
+  CMD_SET_MEM_W        0x45  #  Write settings memory
+  CMD_BOOT_MEM_R       0x46  #  Read bootloader memory
+  CMD_BOOT_MEM_W       0x47  #  Write bootloader memory
+
+  # Miscellaneous Commands
+  CMD_BLINKLED         0x50  #  Blink the LED
+  CMD_RESET            0x51  #  Reset the device
+  CMD_STATUS           0x52  #  Read the device status
+  CMD_NETWORK_CONF     0x54  #  Read device network configuration
+  CMD_FIRMWARE         0x60  #  Enter bootloader for firmware upgrade
+
+
+  # return command value
+  RET_DIN_R      0x80  # Read  DIO pins
+  RET_DOUT_R     0x82  # Read  DIO latch value
+  RET_DOUT_W     0x83  # Write DIO latch value
+  RET_DCONF_R    0x84  # Read  DIO configuration value
+  RET_DCONF_W    0x85  # Write DIO Configuration value
+  RET_COUNTER_R  0xB0  #  Read event counter
+  RET_COUNTER_W  0xB1  #  Reset event counter
+  RET_CONF_MEM_R       0xC0  #  Read configuration memeory
+  RET_CONF_MEM_W       0xC1  #  Write configuration memory
+  RET_USR_MEM_R        0xC2  #  Read user memory  
+  RET_USR_MEM_W        0xC3  #  Write user memory
+  RET_SET_MEM_R        0xC4  #  Read settings memory
+  RET_SET_MEM_W        0xC5  #  Write settings memory
+  RET_BOOT_MEM_R       0xC6  #  Read bootloader memory
+  RET_BOOT_MEM_W       0xC7  #  Write bootloader memory
+  RET_BLINKLED         0xD0  #  Blink the LED
+  RET_RESET            0xD1  #  Reset the device
+  RET_STATUS           0xD2  #  Read the device status
+  RET_NETWORK_CONF     0xD4  #  Read device network configuration
+  RET_FIRMWARE         0xE0  #  Enter bootloader for firmware upgrade
+}
+
+###############################################################################
+# A very specific way to know the size of the message.
+# To match the example_capture.pcap
+# Do not use this (or this kind of scheme) without a very good reason.
+###############################################################################
+
+function  uint32  compute_size_after_header (in T_command  cmd_id)
+{
+  hide var uint32  size_after_header = 1;
+
+  switch(cmd_id)     # T_command
+  {
+  # The message fit the packet.
+  case T_command::CMD_DIN_R    :  set  size_after_header =   1;
+
+  case T_command::CMD_DOUT_R   :  set  size_after_header =   1;
+  case T_command::CMD_DOUT_W   :  set  size_after_header =   7;
+  case T_command::CMD_DCONF_R  :  set  size_after_header =  1;
+  case T_command::CMD_DCONF_W  :  set  size_after_header =  7;
+  }
+  
+  return  size_after_header;
+}
+
+###############################################################################
+# Header
+###############################################################################
+
+struct  T_msg_header_type_wsgd
+{
+  byte_order          little_endian;
+
+  uint8{d=hex}          Start;
+  T_command      Command;
+  uint8          Frame;
+  uint8          Status;
+  uint16         Count;
+
+  #var uint16          Size = compute_size_after_header(Command);
+
+  hide var string     Msg_Title = print ("%s (0x%02x), Frame=%d, Status=%d, Count=%d", Command, Command, Frame, Status, Count);
+}
+
+struct  T_msg_header_type
+{
+  T_msg_header_type_wsgd  "";
+}
+
+struct  T_cmd_dconf_w
+{
+  T_msg_header_type  Header ;
+  uint24{d=hex} Mask;
+  uint24{d=hex} Value;
+  uint8{d=hex}  Crc;
+
+  #print ("Mask=0x%x, Value=0x%x, CRC=0x%x", mask, value, crc);
+}
+
+
+struct  T_cmd_nodata
+{
+  T_msg_header_type  Header ;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_in_addr
+{
+  uint32{d=hex}  s_addr;
+}
+
+struct  T_ret_network
+{
+  T_msg_header_type  Header ;
+  T_in_addr addr1;
+  T_in_addr addr2;
+  T_in_addr addr3;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_cmd_1b
+{
+  T_msg_header_type  Header ;
+  uint8{d=hex} Value;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_cmd_2b
+{
+  T_msg_header_type  Header ;
+  uint16{d=hex} Value;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_cmd_3b
+{
+  T_msg_header_type  Header ;
+  uint24{d=hex} Value;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_cmd_4b
+{
+  T_msg_header_type  Header ;
+  uint32{d=hex} Value;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_cmd_confmem_r
+{
+  T_msg_header_type  Header ;
+  uint16{d=hex} Address;
+  uint16        Length;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_cmd_confmem_w
+{
+  T_msg_header_type  Header ;
+  uint16{d=hex} Address;
+  raw(Count-2)  Data;
+  uint8{d=hex}  Crc;
+}
+
+struct  T_msg_unknow
+{
+  T_msg_header_type  Header;
+  raw(Count)         Payload;
+  uint8{d=hex}       Crc;
+}
+
+###############################################################################
+# Main switch
+###############################################################################
+
+switch  T_msg_switch  #  T_command
+{
+case  T_command::CMD_DIN_R      : T_cmd_nodata       "";
+case  T_command::CMD_DCONF_R    : T_cmd_dconf_w      "";
+case  T_command::CMD_DCONF_W    : T_cmd_dconf_w      "";
+case  T_command::CMD_DOUT_R     : T_cmd_nodata       "";
+case  T_command::CMD_DOUT_W     : T_cmd_dconf_w      "";
+case  T_command::CMD_COUNTER_R  : T_cmd_nodata       "";
+case  T_command::CMD_COUNTER_W  : T_cmd_nodata       "";
+case  T_command::CMD_BLINKLED   : T_cmd_1b           "";
+case  T_command::CMD_RESET      : T_cmd_nodata       "";
+case  T_command::CMD_STATUS     : T_cmd_nodata       "";
+case  T_command::CMD_NETWORK_CONF : T_cmd_nodata     "";
+case  T_command::CMD_FIRMWARE   : T_cmd_2b           "";
+case  T_command::CMD_CONF_MEM_R : T_cmd_confmem_r    "";
+case  T_command::CMD_CONF_MEM_W : T_cmd_confmem_w    "";
+case  T_command::CMD_USR_MEM_R  : T_cmd_confmem_r    "";
+case  T_command::CMD_USR_MEM_W  : T_cmd_confmem_w    "";
+case  T_command::CMD_SET_MEM_R  : T_cmd_confmem_r    "";
+case  T_command::CMD_SET_MEM_W  : T_cmd_confmem_w    "";
+case  T_command::CMD_BOOT_MEM_R : T_cmd_confmem_r    "";
+case  T_command::CMD_BOOT_MEM_W : T_cmd_confmem_w    "";
+
+case  T_command::RET_DIN_R      : T_cmd_3b           "";
+case  T_command::RET_DCONF_R    : T_cmd_3b           "";
+case  T_command::RET_DCONF_W    : T_cmd_nodata       "";
+case  T_command::RET_DOUT_R     : T_cmd_3b           "";
+case  T_command::RET_DOUT_W     : T_cmd_nodata       "";
+case  T_command::RET_COUNTER_R  : T_cmd_4b           "";
+case  T_command::RET_COUNTER_W  : T_cmd_nodata       "";
+case  T_command::RET_BLINKLED   : T_cmd_nodata       "";
+case  T_command::RET_RESET      : T_cmd_nodata       "";
+case  T_command::RET_STATUS     : T_cmd_2b           "";
+case  T_command::RET_NETWORK_CONF : T_ret_network    "";
+case  T_command::RET_FIRMWARE   : T_cmd_nodata       "";
+case  T_command::RET_CONF_MEM_R : T_msg_unknow       "";
+case  T_command::RET_CONF_MEM_W : T_cmd_nodata       "";
+case  T_command::RET_USR_MEM_R  : T_msg_unknow       "";
+case  T_command::RET_USR_MEM_W  : T_cmd_nodata       "";
+case  T_command::RET_SET_MEM_R  : T_msg_unknow       "";
+case  T_command::RET_SET_MEM_W  : T_cmd_nodata       "";
+case  T_command::RET_BOOT_MEM_R : T_msg_unknow       "";
+case  T_command::RET_BOOT_MEM_W  : T_cmd_nodata       "";
+
+default        : 
+#  fatal ("Unknow msg identifier %d (%s)", Type, Type);
+  T_msg_unknow  "";
+}
+
+###############################################################################
+# Main type
+# With the current definition,
+#  "MSG_MAIN_TYPE      T_msg_main_type" is strictly identical to
+#  "MSG_MAIN_TYPE      T_msg_switch(Type)"
+#  inside <file>.wsgd
+###############################################################################
+
+struct  T_msg_main_type
+{
+  T_msg_switch(Command)    "";
+}

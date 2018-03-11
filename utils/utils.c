@@ -1,0 +1,463 @@
+/**
+ * \file    utils.c
+ * \brief   support functions
+ * \author  Yunhui Fu <yhfudev@gmail.com>
+ * \version 1.0
+ */
+
+#include <string.h>
+#include <stdlib.h> // free()
+#include <ctype.h> // isblank()
+#include <assert.h>
+
+#include "utils.h"
+
+#define DBGMSG(a,b,...)
+
+/**
+ * \brief 折半方式查找记录
+ *
+ * \param userdata : 用户数据指针
+ * \param num_data : 数据个数
+ * \param cb_comp : 比较两个数据的回调函数
+ * \param data_pinpoint : 所要查找的 匹配数据指针
+ * \param ret_idx : 查找到的位置;如果没有找到，则返回如添加该记录时其所在的位置。
+ *
+ * \return 找到则返回0，否则返回<0
+ *
+ * 折半方式查找记录, psl->marr 中指向的数据已经以先小后大方式排好序
+ */
+/**
+ * \brief Using binary search to find the position by data_pin
+ *
+ * \param userdata : User's data
+ * \param num_data : the number of items in the sorted data
+ * \param cb_comp : the callback function to compare the user's data and pin
+ * \param data_pinpoint : The reference data to be found
+ * \param ret_idx : the position of the required data; If failed, then it is the failed position, which is the insert position if possible.
+ *
+ * \return 0 on found, <0 on failed(fail position is saved by ret_idx)
+ *
+ * Using binary search to find the position by data_pin. The user's data should be sorted.
+ */
+int
+pf_bsearch_r (void *userdata, size_t num_data, pf_bsearch_cb_comp_t cb_comp, void *data_pinpoint, size_t *ret_idx)
+{
+    int retcomp;
+    uint8_t flg_found;
+    size_t ileft;
+    size_t iright;
+    size_t i;
+
+    if (NULL == cb_comp) {
+        return -1;
+    }
+    /* 查找合适的位置 */
+    if (num_data < 1) {
+        if (NULL != ret_idx) {
+            *ret_idx = 0;
+        }
+        DBGMSG (PFDBG_CATLOG_PF, PFDBG_LEVEL_ERROR, "num_data(%"PRIuSZ") < 1", num_data);
+        return -1;
+    }
+
+    /* 折半查找 */
+    /* 为了不出现负数，以免缩小索引的所表示的数据范围
+     * (负数表明减少一位二进制位的使用)，
+     * 内部 ileft 和 iright使用从1开始的下标，
+     *   即1表示C语言中的0, 2表示语言中的1，以此类推。
+     * 对外还是使用以 0 为开始的下标
+     */
+    i = 0;
+    ileft = 1;
+    iright = num_data;
+    flg_found = 0;
+    for (; ileft <= iright;) {
+        i = (ileft + iright) / 2 - 1;
+        /* cb_comp should return the *userdata[i] - *data_pinpoint */
+        retcomp = cb_comp (userdata, i, data_pinpoint);
+        if (retcomp > 0) {
+            iright = i;
+        } else if (retcomp < 0) {
+            ileft = i + 2;
+        } else {
+            /* found ! */
+            flg_found = 1;
+            break;
+        }
+    }
+
+    if (flg_found) {
+        if (NULL != ret_idx) {
+            *ret_idx = i;
+        }
+        return 0;
+    }
+    if (NULL != ret_idx) {
+        if (iright <= i) {
+            *ret_idx = i;
+        } else if (ileft >= i + 2) {
+            *ret_idx = i + 1;
+        }
+    }
+    DBGMSG (PFDBG_CATLOG_PF, PFDBG_LEVEL_DEBUG, "not found! num_data=%"PRIuSZ"; ileft=%"PRIuSZ", iright=%"PRIuSZ", i=%"PRIuSZ"", num_data, ileft, iright, i);
+    return -1;
+}
+
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+
+#include <ciut.h>
+
+/*"data_list[idx] - *data_pin"*/
+static int
+pf_bsearch_cb_comp_char(void *userdata, size_t idx, void * data_pin)
+{
+    char *list = (char *)userdata;
+    char *data = (char *)data_pin;
+
+    if (! data) {
+        return 1;
+    }
+
+    assert (list);
+    assert (data);
+    if (*data == list[idx]) {
+        return 0;
+    } else if (*data < list[idx]) {
+        return 1;
+    }
+    return -1;
+}
+
+TEST_CASE( .name="binsearch", .description="test search.", .skip=0 ) {
+#define CSTR_LARGE "abcdefghijklmnopqrstuvwxyz"
+
+    int i;
+
+    SECTION("test binary search callback function") {
+        char * list = CSTR_LARGE;
+        char pin = 'c';
+
+        assert (sizeof(CSTR_LARGE) > 1);
+        assert (sizeof(CSTR_LARGE) == 27);
+
+        CIUT_LOG ("test the parameters %d", 1);
+        REQUIRE(1 == pf_bsearch_cb_comp_char(NULL, 0, NULL));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 0, NULL));
+
+        pin = 'c';
+        assert(pin == CSTR_LARGE[2]);
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 0, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 1, &pin));
+        REQUIRE(0 == pf_bsearch_cb_comp_char(CSTR_LARGE, 2, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 3, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, sizeof(CSTR_LARGE)-2, &pin));
+
+        pin = 'a';
+        assert(pin == CSTR_LARGE[0]);
+        REQUIRE(0 == pf_bsearch_cb_comp_char(CSTR_LARGE, 0, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 1, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 2, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 3, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, sizeof(CSTR_LARGE)-2, &pin));
+
+        pin = 'z';
+        assert(pin == CSTR_LARGE[25]);
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 0, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 1, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 2, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 3, &pin));
+        REQUIRE(0 == pf_bsearch_cb_comp_char(CSTR_LARGE, sizeof(CSTR_LARGE)-2, &pin));
+
+        pin = 'A';
+        assert(pin < CSTR_LARGE[0]);
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 0, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 1, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 2, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 3, &pin));
+        REQUIRE(1 == pf_bsearch_cb_comp_char(CSTR_LARGE, sizeof(CSTR_LARGE)-2, &pin));
+
+        pin = 125;
+        assert(pin > CSTR_LARGE[sizeof(CSTR_LARGE)-2]);
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 0, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 1, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 2, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, 3, &pin));
+        REQUIRE(-1 == pf_bsearch_cb_comp_char(CSTR_LARGE, sizeof(CSTR_LARGE)-2, &pin));
+    }
+
+    SECTION("test binary search") {
+        size_t idx;
+        char pin = 'c';
+
+        CIUT_LOG ("test the parameters %d", 1);
+        REQUIRE(-1 == pf_bsearch_r(NULL, 0, NULL, NULL, NULL));
+        REQUIRE(-1 == pf_bsearch_r(NULL, 0, pf_bsearch_cb_comp_char, NULL, NULL));
+        REQUIRE(-1 == pf_bsearch_r(NULL, 0, pf_bsearch_cb_comp_char, &pin, NULL));
+        REQUIRE(-1 == pf_bsearch_r(NULL, 0, pf_bsearch_cb_comp_char, &pin, &idx));
+        REQUIRE(-1 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, NULL, NULL, NULL));
+        REQUIRE(-1 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, NULL, NULL));
+        REQUIRE(0 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, &pin, NULL));
+
+        pin = 'a';
+        assert(pin == CSTR_LARGE[0]);
+        CIUT_LOG ("test search '%c'", pin);
+        REQUIRE(0 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, &pin, &idx));
+        REQUIRE(0 == idx);
+
+        pin = 'c';
+        assert(pin == CSTR_LARGE[2]);
+        CIUT_LOG ("test search '%c'", pin);
+        REQUIRE(0 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, &pin, &idx));
+        //CIUT_LOG ("search(pin='%c') return idx=%d", pin, idx);
+        REQUIRE(2 == idx);
+
+        pin = 'z';
+        assert(pin == CSTR_LARGE[25]);
+        CIUT_LOG ("test search '%c'", pin);
+        REQUIRE(0 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, &pin, &idx));
+        REQUIRE(25 == idx);
+
+        pin = 'A';
+        assert(pin < CSTR_LARGE[0]);
+        idx = 1;
+        CIUT_LOG ("test search '%c'", pin);
+        REQUIRE(-1 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, &pin, &idx));
+        REQUIRE(0 == idx);
+
+        pin = 125;
+        assert(pin > CSTR_LARGE[sizeof(CSTR_LARGE)-2]);
+        idx = 1;
+        CIUT_LOG ("test search '%c'", pin);
+        REQUIRE(-1 == pf_bsearch_r(CSTR_LARGE, sizeof(CSTR_LARGE)-1, pf_bsearch_cb_comp_char, &pin, &idx));
+        REQUIRE(sizeof(CSTR_LARGE)-1 == idx);
+    }
+#undef CSTR_LARGE
+}
+
+#endif /* CIUT_ENABLED */
+
+/**
+ * \brief read the lines from file and feed the lines to user callback
+ * \param fp: the FILE pointer
+ * \param userdata: the user data
+ * \param process: the callback function
+ *
+ * \return 0 on success, <0 on failed
+ *
+ */
+int
+fread_lines (FILE *fp, void * userdata, int (* process)(off_t pos, char * buf, size_t size, void *userdata))
+{
+    char * buffer = NULL;
+    size_t szbuf = 0;
+    off_t pos;
+    ssize_t ret;
+
+    szbuf = 5000;
+    buffer = (char *) malloc (szbuf);
+    if (NULL == buffer) {
+        return -1;
+    }
+    pos = ftell (fp);
+    // ssize_t getline (char **lineptr, size_t *n, FILE *stream)
+    // char * fgets ( char * str, int num, FILE * stream );
+    while ( fgets ( (char *)buffer, szbuf, fp ) != NULL ) { ret = strlen(buffer);
+    //while ( (ret = getline ( &buffer, &szbuf, fp )) > 0 ) {
+        process (pos, buffer, ret, userdata);
+        pos = ftell (fp);
+    }
+
+    free (buffer);
+    return 0;
+}
+
+
+/**
+ * \brief read the lines from file and process the commands of the lines
+ * \param fn_conf: the file name
+ * \param userdata: the user data
+ * \param process: the callback function
+ *
+ * \return N/A
+ *
+ */
+int
+read_file_lines(const char * fn_conf, void * userdata, int (* process)(off_t pos, char * buf, size_t size, void *userdata))
+{
+    int ret;
+    FILE *fp = NULL;
+    if (NULL == fn_conf) {
+        fp = stdin;
+    } else {
+        fp = fopen(fn_conf, "r");
+    }
+    if (NULL == fp) {
+        assert (NULL != fn_conf);
+        fprintf(stderr, "error in open file: '%s'.\n", fn_conf);
+        return -1;
+    }
+    assert (NULL != fp);
+    ret = fread_lines (fp, userdata, process);
+    if (stdin != fp) {
+        fclose(fp);
+    }
+    return ret;
+}
+
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+/*#include <ciut.h>
+
+TEST_CASE( .description="test utils.", .skip=0 ) {
+
+    SECTION("test read file") {
+    }
+}
+*/
+#endif /* CIUT_ENABLED */
+
+
+/**
+ * \brief strip a C string and save to buffer
+ * \param orig: the string to be striped
+ * \param buf: the buffer to store the result
+ * \param sz_buf: the size of the buffer
+ *
+ * \return 0 on success, <0 on failed
+ *
+ */
+int
+cstr_strip(const char * orig, char * buf, size_t sz_buf)
+{
+    char * pstart = (char *)orig;
+    char * pend = NULL;
+    size_t len;
+
+    if (NULL == orig) {
+        return -1;
+    }
+    len = strlen(orig);
+    pend = (char *)orig + len;
+    for (pstart = (char *)orig; pstart < pend; pstart ++) {
+        if ((! isblank(*pstart)) && ('\n' != *pstart) && ('\r' != *pstart)) {
+            break;
+        }
+    }
+    pend --;
+    for (; pstart < pend; pend --) {
+        if ((! isblank(*pend)) && ('\n' != *pend) && ('\r' != *pend)) {
+            break;
+        }
+    }
+    if (NULL == buf) {
+        return -1;
+    }
+    if (sz_buf < 1) {
+        return -1;
+    }
+    assert (NULL != buf);
+    pend ++;
+    if (pstart >= pend) {
+        buf[0] = 0;
+        return 0;
+    }
+    len = pend - pstart;
+    if (len > sz_buf) {
+        return -2;
+    }
+    memmove (buf, pstart, len);
+    buf[len] = 0;
+    return 0;
+}
+
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+
+#include <ciut.h>
+
+int
+test_strip_cstr(const char *orig, const char *expected)
+{
+    char buf[100] = "xx";
+    assert (NULL != expected);
+    assert (sizeof(buf) > strlen(expected));
+    if (0 > cstr_strip(orig, buf, sizeof(buf) - 1)) {
+        return -1;
+    }
+    return strcmp(buf, expected);
+}
+
+TEST_CASE( .description="test utils.", .skip=0 ) {
+
+    int i;
+
+    SECTION("test cstr_strip parameters") {
+        char buf[25] = "";
+        //CIUT_LOG ("test the parameters");
+        REQUIRE(-1 == cstr_strip(NULL, NULL, 0));
+        REQUIRE(-1 == cstr_strip("", NULL, 0));
+        REQUIRE(-1 == cstr_strip(NULL, buf, 0));
+        REQUIRE(0 == cstr_strip("", buf, sizeof(buf)));
+#define CSTR_LARGE "abcdefghijklmnopqrstuvwxyz"
+        assert (sizeof(CSTR_LARGE) > sizeof(buf));
+        REQUIRE(-2 == cstr_strip(CSTR_LARGE, buf, sizeof(buf)));
+        REQUIRE(0 == strlen(buf));
+
+        // buffer test
+#define CSTR_TEST_1_RE "abcdefghijkl"
+#define CSTR_TEST_1 CSTR_TEST_1_RE " \t  \t"
+        assert (sizeof(CSTR_TEST_1) < sizeof(buf));
+        assert (sizeof(CSTR_TEST_1_RE) < sizeof(buf));
+        strcpy(buf, CSTR_TEST_1);
+        REQUIRE(0 == cstr_strip(buf, buf, sizeof(buf)));
+        REQUIRE(0 == strcmp(buf, CSTR_TEST_1_RE));
+#undef CSTR_TEST_1
+#undef CSTR_TEST_1_RE
+#define CSTR_TEST_1_RE "abcdefghijkl"
+#define CSTR_TEST_1 " \t   " CSTR_TEST_1_RE
+        assert (sizeof(CSTR_TEST_1) < sizeof(buf));
+        assert (sizeof(CSTR_TEST_1_RE) < sizeof(buf));
+        strcpy(buf, CSTR_TEST_1);
+        REQUIRE(0 == cstr_strip(buf, buf, sizeof(buf)));
+        REQUIRE(0 == strcmp(buf, CSTR_TEST_1_RE));
+#undef CSTR_TEST_1
+#undef CSTR_TEST_1_RE
+#define CSTR_TEST_1_RE "abcdefghijkl"
+#define CSTR_TEST_1 " \t   " CSTR_TEST_1_RE " \t  \t"
+        assert (sizeof(CSTR_TEST_1) < sizeof(buf));
+        assert (sizeof(CSTR_TEST_1_RE) < sizeof(buf));
+        strcpy(buf, CSTR_TEST_1);
+        REQUIRE(0 == cstr_strip(buf, buf, sizeof(buf)));
+        REQUIRE(0 == strcmp(buf, CSTR_TEST_1_RE));
+#undef CSTR_TEST_1
+#undef CSTR_TEST_1_RE
+
+#undef CSTR_LARGE
+    }
+    SECTION("test strip string") {
+        static const char * list_strip_cstr[] = {
+            "",  "", // result, orig
+            "",  "\n",
+            "",  "\t",
+            "",  "\t\t",
+            "",  "\t \t ",
+            "",  " \t \t ",
+            "a",  "a\n",
+            "a",  "a\n\r",
+            "a",  "a\n\r \n",
+            "a", " a ",
+            "a", "\ta\t",
+            "a", "\t a \t",
+            "a b", "a b",
+            "a\tb", "a\tb",
+            "a  b", "a  b",
+            "a \t b", "a \t b",
+            "", "",
+        };
+        for (i = 0; i < NUM_ARRAY(list_strip_cstr); i += 2) {
+            CIUT_LOG ("compare strip string idx=%d", i/2);
+            REQUIRE(0 == test_strip_cstr(list_strip_cstr[i + 1], list_strip_cstr[i + 0]));
+        }
+    }
+}
+
+#endif /* CIUT_ENABLED */

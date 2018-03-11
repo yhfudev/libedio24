@@ -1,0 +1,235 @@
+%# -*- coding: utf-8 -*-
+%!TEX encoding = UTF-8 Unicode
+%!TEX TS-program = xelatex
+% vim:ts=4:sw=4
+%
+% 以上设定默认使用 XeLaTex 编译，并指定 Unicode 编码，供 TeXShop 自动识别
+
+% Latex header for doxygen 1.8.4
+
+%\documentclass[a4paper,10pt,twoside,twocolumn]{article}
+\documentclass[letter,11pt,twoside,onecolumn]{book}
+%\documentclass[letter,11pt,twoside,onecolumn,adobefonts,cm-default]{ctexbook}
+
+\newcommand{\doctitle}{libedio24 - A network library to control E-DIO24 devices}
+\newcommand{\docauthor}{Yunhui Fu}
+\newcommand{\dockeywords}{E-DIO24, C++, Library}
+\newcommand{\docsubject}{C++ Library for E-DIO24}
+
+%\newcommand{\mycndocenv}[1]{#1}
+\newcommand{\mycndocenv}[1]{}
+
+\mycndocenv{
+\newcommand{\usedefaultTWO}[2]{
+\if\relax\detokenize{#2}\relax
+  #1
+\else
+  #2
+\fi
+}
+
+\newcommand{\usedefaultTHREE}[3]{
+\if\relax\detokenize{#3}\relax
+  \usedefaultTWO{#1}{#2}
+\else
+  #3
+\fi
+}
+
+% 用于接受从 xelatex/pdflatex 通过参数 -jobname 传入的参数来判定编译何种语言的版本。
+% \cnt 的三个参数分别为 en/zh/tw 的内容
+\newcommand{\cnt}[3]{{#1}{#2}{#3}}
+%\newcommand{\cnt}[3]{#1} % default en
+\usepackage{ifthen}
+\ifthenelse{\equal{\detokenize{lang-zh}}{\jobname}}{
+  \renewcommand{\cnt}[3]{\usedefaultTWO{#1}{#2}}
+}{
+  \ifthenelse{\equal{\detokenize{lang-tw}}{\jobname}}{
+    \renewcommand{\cnt}[3]{\usedefaultTHREE{#1}{#2}{#3}}
+  }{
+    % default en
+    \renewcommand{\cnt}[3]{#1}
+    %\renewcommand{\cnt}[3]{#2}
+  }
+}
+
+\newcommand{\cnts}[3]{{#1} {#2}}
+
+% 根据配置来设置中文环境
+\newcommand\usefontspeczh[1]{#1} % use fontspec for zh_CN
+\newcommand\charsetzhcn[1]{#1} % the charset encoding for zh_CN
+\newcommand\formatzhcn[1]{#1} % the page format for zh_CN
+\cnt{
+\renewcommand\usefontspeczh[1]{}
+\renewcommand\charsetzhcn[1]{}
+\renewcommand\formatzhcn[1]{}
+}{
+%\renewcommand\usefontspeczh[1]{}
+%\renewcommand\charsetzhcn[1]{}
+%\renewcommand\formatzhcn[1]{}
+}{
+%\renewcommand\usefontspeczh[1]{}
+%\renewcommand\charsetzhcn[1]{}
+%\renewcommand\formatzhcn[1]{}
+}
+\input{../cndoc.tex}
+}
+
+
+\usepackage[yyyymmdd,hhmmss]{datetime}
+
+% fix
+\newcommand{\+}{}
+
+% Packages required by doxygen
+\usepackage{calc}
+\usepackage{doxygen}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{makeidx}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{textcomp}
+\usepackage[table]{xcolor}
+
+% Font selection
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[scaled=.90]{helvet}
+\usepackage{courier}
+\usepackage{amssymb}
+\usepackage{sectsty}
+\renewcommand{\familydefault}{\sfdefault}
+\allsectionsfont{%
+  \fontseries{bc}\selectfont%
+  \color{darkgray}%
+}
+\renewcommand{\DoxyLabelFont}{%
+  \fontseries{bc}\selectfont%
+  \color{darkgray}%
+}
+
+% Page & text layout
+\usepackage{geometry}
+\geometry{%
+  letterpaper,%
+  top=2.5cm,%
+  bottom=2.5cm,%
+  left=2.5cm,%
+  right=2.5cm%
+}
+\tolerance=750
+\hfuzz=15pt
+\hbadness=750
+\setlength{\emergencystretch}{15pt}
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{0.2cm}
+\makeatletter
+\renewcommand{\paragraph}{%
+  \@startsection{paragraph}{4}{0ex}{-1.0ex}{1.0ex}{%
+    \normalfont\normalsize\bfseries\SS@parafont%
+  }%
+}
+\renewcommand{\subparagraph}{%
+  \@startsection{subparagraph}{5}{0ex}{-1.0ex}{1.0ex}{%
+    \normalfont\normalsize\bfseries\SS@subparafont%
+  }%
+}
+\makeatother
+
+% Headers & footers
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhead[LE]{\fancyplain{}{\bfseries\thepage}}
+\fancyhead[CE]{\fancyplain{}{}}
+\fancyhead[RE]{\fancyplain{}{\bfseries\leftmark}}
+\fancyhead[LO]{\fancyplain{}{\bfseries\rightmark}}
+\fancyhead[CO]{\fancyplain{}{}}
+\fancyhead[RO]{\fancyplain{}{\bfseries\thepage}}
+\fancyfoot[LE]{\fancyplain{}{}}
+\fancyfoot[CE]{\fancyplain{}{}}
+\fancyfoot[RE]{\fancyplain{}{\bfseries\scriptsize Generated on \today\ at \currenttime ~ for libedio24}}
+\fancyfoot[LO]{\fancyplain{}{\bfseries\scriptsize Generated on \today\ at \currenttime ~ for libedio24}}
+\fancyfoot[CO]{\fancyplain{}{}}
+\fancyfoot[RO]{\fancyplain{}{}}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\chaptermark}[1]{%
+  \markboth{#1}{}%
+}
+\renewcommand{\sectionmark}[1]{%
+  \markright{\thesection\ #1}%
+}
+
+% Indices & bibliography
+\usepackage{natbib}
+\usepackage[titles]{tocloft}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{5}
+\makeindex
+
+% Hyperlinks (required, but should be loaded last)
+\usepackage{ifpdf}
+\ifpdf
+  \usepackage[
+    pdftitle={\doctitle},
+    pdfauthor={\docauthor},
+    pdfsubject={\docsubject},
+    pdfkeywords={\dockeywords},
+    pdfproducer={Latex with hyperref},
+    pdfcreator={pdflatex},
+    pdftex,
+    pagebackref=true]{hyperref}
+\else
+  \usepackage[
+    pdftitle={\doctitle},
+    pdfauthor={\docauthor},
+    pdfsubject={\docsubject},
+    pdfkeywords={\dockeywords},
+    pdfproducer={Latex with hyperref},
+    pdfcreator={pdflatex},
+    ps2pdf,
+    pagebackref=true]{hyperref}
+\fi
+\hypersetup{%
+  colorlinks=true,%
+  linkcolor=blue,%
+  citecolor=blue,%
+  unicode%
+}
+
+% Custom commands
+\newcommand{\clearemptydoublepage}{%
+  \newpage{\pagestyle{empty}\cleardoublepage}%
+}
+
+
+%===== C O N T E N T S =====
+
+\usepackage{CJKutf8} 
+\begin{document}
+\begin{CJK}{UTF8}{gbsn}
+
+% Titlepage & ToC
+\hypersetup{pageanchor=false}
+\pagenumbering{roman}
+\begin{titlepage}
+\vspace*{7cm}
+\begin{center}%
+{\Large \texttt{libedio24}} \\
+\vspace*{0.1cm}
+{\Large -- C++ Library for} \\
+\vspace*{0.1cm}
+{\Large E-DIO24}\\
+\vspace*{1cm}
+{\large \docauthor}\\
+\vspace*{0.5cm}
+{\small Compiled on \today\ at \currenttime}\\
+\end{center}
+\end{titlepage}
+\clearemptydoublepage
+\tableofcontents
+\clearemptydoublepage
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+
+%--- Begin generated contents ---

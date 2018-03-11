@@ -1,0 +1,26 @@
+
+DIn
+DOutR
+DOutW    0xFF 0x31
+DConfigR
+DConfigW 0xFF 0x13
+CounterR
+CounterW
+BlinkLED 0x01
+Reset
+Status
+NetworkConfig
+FirmwareUpgrade
+ConfigMemoryR 0x1 0x5
+ConfigMemoryW 0x1 0x313924
+UserMemoryR   0x123 0x15
+UserMemoryW   0x123 0x4987249dd9876af987695d07
+SettingsMemoryR 0x12 0x39
+SettingsMemoryW 0x12 0xe932be9df8
+BootloaderMemoryR 0x1D000000 0x122
+BootloaderMemoryW 0x1D000000 0x98392349231344283798751098374
+
+# test sleep
+Sleep 10000
+Status
+
