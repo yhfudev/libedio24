@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <string.h> // memmove()
 #include <unistd.h> // STDERR_FILENO
 #include <assert.h>
 
@@ -154,7 +155,10 @@ ssize_t
 edio24_pkt_create_cmd_dinr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id)
 {
     static const int data_count_dinr = 0;
-    assert (NULL != frame_id);
+
+    if (NULL == frame_id) {
+        return -1;
+    }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_dinr) {
         fprintf(stderr, "edio24 warning: doutr buffer size limited.\n");
         return -1;
@@ -344,7 +348,10 @@ ssize_t
 edio24_pkt_create_cmd_firmware (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id)
 {
     static const int data_count_firmware = 2;
-    assert (NULL != frame_id);
+
+    if (NULL == frame_id) {
+        return -1;
+    }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_firmware) {
         return -1;
     }
@@ -376,12 +383,15 @@ ssize_t
 edio24_pkt_create_cmd_blinkled (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id, uint8_t value)
 {
     static const int data_count_blinkled = 1;
-    assert (NULL != frame_id);
+
+    if (NULL == frame_id) {
+        return -1;
+    }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_blinkled) {
         return -1;
     }
     buffer[MSG_INDEX_COMMAND]        = CMD_BLINKLED;
-    buffer[MSG_INDEX_DATA]     =   value       & 0xFF;
+    buffer[MSG_INDEX_DATA]           =   value       & 0xFF;
     buffer[MSG_INDEX_START]          = MSG_START;
     buffer[MSG_INDEX_FRAME]          = *frame_id; // increment frame ID with every send
     buffer[MSG_INDEX_STATUS]         = MSG_SUCCESS;
@@ -410,7 +420,10 @@ ssize_t
 edio24_pkt_create_cmd_confmemr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id, uint16_t address, uint16_t count)
 {
     static const int data_count_confmemr = 4;
-    assert (NULL != frame_id);
+
+    if (NULL == frame_id) {
+        return -1;
+    }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_confmemr) {
         return -1;
     }
@@ -456,11 +469,15 @@ ssize_t
 edio24_pkt_create_cmd_confmemw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id, uint16_t address, uint16_t count, uint8_t *buffer_data)
 {
     int data_count_confmemw = 2;
-    data_count_confmemw = 2 + count;
-    assert (NULL != frame_id);
+
+    if (NULL == frame_id) {
+        return -1;
+    }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_confmemw) {
         return -1;
     }
+    data_count_confmemw = 2 + count;
+
     buffer[MSG_INDEX_COMMAND]  = CMD_CONF_MEM_W;
     buffer[MSG_INDEX_DATA]     =  address        & 0xFF;
     buffer[MSG_INDEX_DATA + 1] = (address >>  8) & 0xFF;
@@ -673,11 +690,15 @@ ssize_t
 edio24_pkt_create_cmd_doutw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id, uint32_t mask, uint32_t value)
 {
     static const int data_count_doutw = 6;
-    assert (NULL != frame_id);
+
+    if (NULL == frame_id) {
+        return -1;
+    }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_doutw) {
         return -1;
     }
-    buffer[MSG_INDEX_COMMAND]        = CMD_DOUT_W;
+
+    buffer[MSG_INDEX_COMMAND]  = CMD_DOUT_W;
     buffer[MSG_INDEX_DATA]     =   mask        & 0xFF;
     buffer[MSG_INDEX_DATA + 1] =  (mask >>  8) & 0xFF;
     buffer[MSG_INDEX_DATA + 2] =  (mask >> 16) & 0xFF;
@@ -986,6 +1007,7 @@ edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
 
 /**
  * \brief process a received UDP client packet
+ * \param flg_force_fail: 1 - force output a fail response message
  * \param buffer_in: the buffer contains received packets
  * \param sz_in: the byte size of the received packets
  * \param buffer_out: the buffer for the content of packet need to send
@@ -998,27 +1020,54 @@ edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
  *         =0 on successs, the variable sz_processed return processed data byte size
  */
 int
-edio24_svr_process_udp(uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_needed_out)
+edio24_svr_process_udp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_needed_out)
 {
+    if (NULL == buffer_in) {
+        return -1;
+    }
+    if (NULL == buffer_out) {
+        return -1;
+    }
+    if (NULL == sz_out) {
+        return -1;
+    }
+    if (NULL == sz_needed_out) {
+        return -1;
+    }
     if (sz_in < 1) {
         return 1;
     }
-    assert (sz_out);
+
+    assert (NULL != buffer_in);
     if ('C' == buffer_in[0]) {
-        if (*sz_out < 1) {
-            assert (sz_needed_out);
-            *sz_needed_out = 2 - sz_in;
+        if (*sz_out < 2) {
+            assert (NULL != sz_needed_out);
+            *sz_needed_out = 2 - *sz_out;
             return 1;
         }
+        assert (NULL != buffer_out);
         buffer_out[0] = 'C';
         buffer_out[1] = 0;
+        if (flg_force_fail) {
+            buffer_out[1] = 1;
+        }
+        assert (NULL != sz_out);
         *sz_out = 2;
+        assert (NULL != sz_needed_out);
+        *sz_needed_out = 0;
     } else if ('D' == buffer_in[0]) {
+        if (flg_force_fail) {
+            assert (NULL != sz_needed_out);
+            *sz_needed_out = 0;
+            return 0;
+        }
+
         if (*sz_out < 64) {
-            assert (sz_needed_out);
+            assert (NULL != sz_needed_out);
             *sz_needed_out = 64 - *sz_out;
             return 1;
         }
+        assert (NULL != buffer_out);
         memset(buffer_out, 0, 64);
         buffer_out[0] = 'D';
         // 6-byte MAC
@@ -1039,6 +1088,8 @@ edio24_svr_process_udp(uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, 
         memset(buffer_out + 35, 0x07, 4);
         // 2-byte bootloader version
         memset(buffer_out + 39, 0x08, 2);
+
+        assert (NULL != sz_out);
         *sz_out = 64;
     }
     return 0;
@@ -1189,6 +1240,7 @@ edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, 
 
 /**
  * \brief process a received client packet
+ * \param flg_force_fail: 1 - force output a fail response message
  * \param buffer_in: the buffer contains received packets
  * \param sz_in: the byte size of the received packets
  * \param buffer_out: the buffer for the content of packet need to send
@@ -1198,32 +1250,36 @@ edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, 
  * \param sz_needed_out: the bytes size of buffer need to extend for current buffer_out, if set, try pass in a more larger buffer_out to continue
  *
  * \return <0 fatal error, user should kill this connection;
- *         =2 the packet illegal, the caller should check if sz_out > 0 and send back the response in buffer_out
+ *         =2 the packet illegal, the caller should check if sz_out > 0 and send back the response in buffer_out;
  *         =1 need more data, the byte size need data is stored in sz_needed;
- *         =0 on successs, the variable sz_processed return processed data byte size
+ *         =0 on successs, the variable sz_processed return processed data byte size;
  */
 int
-edio24_svr_process_tcp(uint8_t * buffer_in, size_t sz_in,
+edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in,
                    uint8_t * buffer_out, size_t *sz_out,
                    size_t * sz_processed, size_t * sz_needed_in, size_t * sz_needed_out)
 {
+    int ret = 0;
     size_t i;
     uint8_t cmd;
-    uint8_t status;
+    uint8_t status = MSG_SUCCESS;
     uint16_t count;
     uint32_t address;
     uint32_t sz_data;
     uint16_t len_data; /**< the byte size for data */
 
-    if (sz_processed) {
-        *sz_processed = 0;
+    if (NULL == sz_processed) {
+        return -1;
     }
-    if (sz_needed_in) {
-        *sz_needed_in = 0;
+    *sz_processed = 0;
+    if (NULL == sz_needed_in) {
+        return -1;
     }
-    if (sz_needed_out) {
-        *sz_needed_out = 0;
+    *sz_needed_in = 0;
+    if (NULL == sz_needed_out) {
+        return -1;
     }
+    *sz_needed_out = 0;
     if (NULL == buffer_in) {
         fprintf(stderr, "edio24 warning: buffer NULL.\n");
         return -1;
@@ -1251,16 +1307,26 @@ edio24_svr_process_tcp(uint8_t * buffer_in, size_t sz_in,
     }
 
     if (0 != edio24_pkt_verify(buffer_in, sz_in)) {
+        flg_force_fail = 1;
+        status = MSG_ERROR_PROTOCOL;
         fprintf(stderr, "edio24 error in verify the received packet\n");
-        return 2;
+        ret = 2;
     }
+
+    if (flg_force_fail) {
+        if (MSG_SUCCESS == status) {
+            // it's not from pkg_verify, it's random fail
+            status = (rand() % MSG_ERROR_OTHER) + 1;
+        }
+        // TODO: generate fail message
+        //return ret;
+    }
+
     fprintf(stderr, "edio24 svr process block:\n");
     hex_dump_to_fd(STDERR_FILENO, buffer_in, MSG_INDEX_DATA + 1 + count);
 
-    status = buffer_in[MSG_INDEX_STATUS];
-    fprintf(stderr, "edio24 info: received %s status: %s(0x%02X)\n", edio24_val2cstr_cmd(cmd), edio24_val2cstr_status(status), status);
+    fprintf(stderr, "edio24 info: received %s status: %s(0x%02X)\n", edio24_val2cstr_cmd(cmd), edio24_val2cstr_status(buffer_in[MSG_INDEX_STATUS]), buffer_in[MSG_INDEX_STATUS]);
 
-    status = MSG_SUCCESS;
     len_data = 0;
     switch (cmd) {
     case CMD_DIN_R:
@@ -1351,8 +1417,11 @@ edio24_svr_process_tcp(uint8_t * buffer_in, size_t sz_in,
 
     default:
         fprintf(stderr, "edio24 error: unsupport command in packet: cmd=%s(0x%02X)\n", edio24_val2cstr_cmd(cmd), cmd);
-        return -1;
+        ret = -1;
         break;
+    }
+    if (ret != 0) {
+        return ret;
     }
     assert (NULL != sz_out);
     if (MSG_INDEX_DATA + 1 + len_data > *sz_out) {
@@ -1374,9 +1443,9 @@ edio24_svr_process_tcp(uint8_t * buffer_in, size_t sz_in,
 
     // random value
     for (i = 0; i < len_data; i ++) {
-        buffer_out[MSG_INDEX_DATA + i] = i & 0xFF;
+        buffer_out[MSG_INDEX_DATA + i] = (1 + i) & 0xFF;
     }
-    buffer_out[MSG_INDEX_DATA + len_data] = (unsigned char) 0xff - edio24_pkt_checksum(buffer_out, MSG_INDEX_DATA + len_data);
+    buffer_out[MSG_INDEX_DATA + len_data] = (unsigned char) 0xFF - edio24_pkt_checksum(buffer_out, MSG_INDEX_DATA + len_data);
 
     assert (NULL != sz_processed);
     assert (NULL != sz_out);
@@ -1391,16 +1460,17 @@ edio24_svr_process_tcp(uint8_t * buffer_in, size_t sz_in,
 #if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
 #include <ciut.h>
 
-TEST_CASE( .description="test edio24 buffers.", .skip=0 ) {
-    uint8_t buffer[10];
+TEST_CASE( .name="edio24-buffer", .description="test edio24 buffers.", .skip=0 ) {
+    uint8_t buffer[15];
     uint8_t frame_id = 0;
 
     SECTION("test parameters") {
-        CIUT_LOG ("null buffer");
+        //CIUT_LOG ("null buffer");
         REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, 0, NULL, 0, 0));
         REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 0, NULL, 0, 0));
         REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, sizeof(buffer), NULL, 0, 0));
 
+        assert (sizeof(buffer) >= 13);
         REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 0, &frame_id, 0, 0));
         REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 1, &frame_id, 0, 0));
         REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 2, &frame_id, 0, 0));
@@ -1414,6 +1484,68 @@ TEST_CASE( .description="test edio24 buffers.", .skip=0 ) {
     }
 
     //CIUT_DBL_EQUAL(0.1 + 0.2, 0.3);
+}
+
+TEST_CASE( .name="edio24-svr-process", .description="test edio24_svr_process_xxx.", .skip=0 ) {
+    uint8_t buffer[100];
+    int ret;
+
+    SECTION("test parameters") {
+        size_t sz_needed_out;
+        size_t sz_out;
+        //CIUT_LOG ("null buffer");
+        // int edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_processed, size_t * sz_needed_in, size_t * sz_needed_out)
+        // int edio24_svr_process_udp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_needed_out)
+        REQUIRE(0 > edio24_svr_process_tcp(0, NULL, 0, NULL, NULL, NULL, NULL, NULL));
+        REQUIRE(0 > edio24_svr_process_udp(0, NULL, 0, NULL, NULL, NULL));
+
+        REQUIRE(0 > edio24_svr_process_tcp(0, buffer, 0, NULL, NULL, NULL, NULL, NULL));
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, 0, NULL, NULL, NULL));
+
+        REQUIRE(0 > edio24_svr_process_tcp(0, buffer, 0, NULL, NULL, NULL, NULL, NULL));
+
+        ret = edio24_pkt_create_opendev(buffer, sizeof(buffer), 0x1A);
+        REQUIRE(0 < ret);
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, NULL, NULL, NULL));
+        REQUIRE(0 > edio24_svr_process_udp(1, buffer, ret, NULL, NULL, NULL));
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, buffer, NULL, NULL));
+        sz_out = 0;
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, NULL));
+        REQUIRE(0 > edio24_svr_process_udp(1, buffer, ret, buffer, &sz_out, NULL));
+        sz_out = sizeof(buffer);
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, NULL));
+        REQUIRE(0 > edio24_svr_process_udp(1, buffer, ret, buffer, &sz_out, NULL));
+
+        sz_out = 0;
+        sz_needed_out = 0;
+        REQUIRE(1 == edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
+        CIUT_LOG ("sz_out=%" PRIuSZ "; sz_needed_out=%" PRIuSZ ";", sz_out, sz_needed_out);
+        REQUIRE(0 == sz_out);
+        REQUIRE(2 == sz_needed_out);
+
+        sz_out = sizeof(buffer);
+        sz_needed_out = 5555;
+        REQUIRE(0 == edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
+        REQUIRE(2 == sz_out);
+        REQUIRE(0 == sz_needed_out);
+
+        sz_out = sizeof(buffer);
+        sz_needed_out = 5555;
+        REQUIRE(0 == edio24_svr_process_udp(1, buffer, ret, buffer, &sz_out, &sz_needed_out));
+        REQUIRE(2 == sz_out);
+        REQUIRE(0 == sz_needed_out);
+
+        ret = edio24_pkt_create_discoverydev(buffer, sizeof(buffer));
+        REQUIRE(0 < ret);
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, 0, NULL, NULL, NULL));
+        sz_out = sizeof(buffer);
+        assert (sz_out >= 64);
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, NULL));
+        REQUIRE(0 == edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
+        CIUT_LOG ("sz_out=%" PRIuSZ "; sz_needed_out=%" PRIuSZ ";", sz_out, sz_needed_out);
+        REQUIRE(64 == sz_out);
+        REQUIRE(0 == sz_needed_out);
+    }
 }
 
 #endif /* CIUT_ENABLED */

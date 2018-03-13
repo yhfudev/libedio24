@@ -30,12 +30,13 @@ uv_loop_t * loop = NULL; /**< this have to be global variable, since it needs to
 
 typedef struct _edio24svr_t {
     char flg_used; /**< 1 -- if the service in busy, only one connect were allowed */
+    char flg_randfail; /**< 1 -- if the server send out fail message on requests */
 
     size_t sz_data; /**< the lenght of data in the buffer */
     uint8_t buffer[(EDIO24_PKT_LENGTH_MIN + 6) * 5]; /**< the buffer to cache the received packets */
 } edio24svr_t;
 
-edio24svr_t edio24svr;
+edio24svr_t g_edio24svr;
 
 void
 alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
@@ -91,6 +92,13 @@ on_udp_svr_write(uv_udp_send_t *req, int status)
 void
 on_udv_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const struct sockaddr *addr, unsigned flags)
 {
+    char flg_randfail = 0;
+    if (g_edio24svr.flg_randfail) {
+        if (rand() % 100 < 50) {
+            flg_randfail = 1;
+        }
+    }
+
     if (nread < 0) {
         fprintf(stderr, "udp svr read error %s\n", uv_err_name(nread));
         uv_close(handle, on_udp_svr_close);
@@ -107,29 +115,35 @@ on_udv_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
         fprintf(stderr, "udp svr recv from %s\n", sender);
 
         if ((nread == 1) && ('D' == buf->base[0])) {
+            /// discovery message
             size_t sz_out;
             size_t sz_needed_out;
             udp_send_buf_t *req = (udp_send_buf_t*) malloc(sizeof(udp_send_buf_t));
             req->buf = uv_buf_init(buf->base, 64);
             sz_out = 64;
             sz_needed_out = 0;
-            edio24_svr_process_udp((uint8_t *)(buf->base), nread, (uint8_t *)(buf->base), &sz_out, &sz_needed_out);
-
-            int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
-            if (r) {
-                /* error */
-                fprintf(stderr, "udp svr error in write() %s\n", uv_strerror(r));
-                free(buf->base);
+            edio24_svr_process_udp(flg_randfail, (uint8_t *)(buf->base), nread, (uint8_t *)(buf->base), &sz_out, &sz_needed_out);
+            if (sz_needed_out > 0) {
+                int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
+                if (r) {
+                    /* error */
+                    fprintf(stderr, "udp svr error in write() %s\n", uv_strerror(r));
+                    free(buf->base);
+                }
             }
 
         } else if ((nread == 5) && ('C' == buf->base[0])) {
+            /// start of new command session
             udp_send_buf_t *req = (udp_send_buf_t*) malloc(sizeof(udp_send_buf_t));
             req->buf = uv_buf_init(buf->base, 2);
             req->buf.base[0] = 'C'; //0x43;
-            if (edio24svr.flg_used) {
+            if (g_edio24svr.flg_used) {
                 req->buf.base[1] = 1;
             } else {
                 req->buf.base[1] = 0;
+                if (flg_randfail) {
+                    req->buf.base[1] = 1;
+                }
             }
             //req->buf.len = 2;
             int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
@@ -171,7 +185,7 @@ void
 on_tcp_svr_close(uv_handle_t* handle)
 {
     fprintf(stderr, "tcp svr closed.\n");
-    edio24svr.flg_used = 0;
+    g_edio24svr.flg_used = 0;
 }
 
 void
@@ -207,6 +221,7 @@ edio24svr_process_data (edio24svr_t * ped, uv_stream_t *stream)
     //int flg_again = 0;
     int ret;
     uv_buf_t buf;
+    char flg_randfail = 0;
 
     assert (NULL != ped);
     assert (NULL != stream);
@@ -227,7 +242,13 @@ edio24svr_process_data (edio24svr_t * ped, uv_stream_t *stream)
         assert (sz_in >= 0);
         assert (NULL != buffer_out);
         assert (sz_out > 0);
-        ret = edio24_svr_process_tcp(buffer_in, sz_in, buffer_out, &sz_out,
+        flg_randfail = 0;
+        if (ped->flg_randfail) {
+            if (rand() % 100 < 50) {
+                flg_randfail = 1;
+            }
+        }
+        ret = edio24_svr_process_tcp(flg_randfail, buffer_in, sz_in, buffer_out, &sz_out,
                                  &sz_processed, &sz_needed_in, &sz_needed_out);
         if (sz_processed > 0) {
             // remove the head of data of size sz_processed
@@ -291,26 +312,26 @@ on_tcp_svr_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         hex_dump_to_fd(STDERR_FILENO, (opaque_t *)(buf->base), nread);
 
         fprintf(stderr, "tcp svr process data 1\n");
-        edio24svr_process_data (&edio24svr, stream);
+        edio24svr_process_data (&g_edio24svr, stream);
         sz_processed = 0;
         while (sz_processed < nread) {
             sz_copy = nread - sz_processed;
-            assert (sizeof(edio24svr.buffer) >= edio24svr.sz_data);
-            if (sz_copy + edio24svr.sz_data > sizeof(edio24svr.buffer)) {
-                sz_copy = sizeof(edio24svr.buffer) - edio24svr.sz_data;
+            assert (sizeof(g_edio24svr.buffer) >= g_edio24svr.sz_data);
+            if (sz_copy + g_edio24svr.sz_data > sizeof(g_edio24svr.buffer)) {
+                sz_copy = sizeof(g_edio24svr.buffer) - g_edio24svr.sz_data;
             }
             fprintf(stderr, "tcp svr push received data size=%" PRIuSZ ", processed=%" PRIuSZ "\n", sz_copy, sz_processed);
             if (sz_copy > 0) {
-                memmove (edio24svr.buffer + edio24svr.sz_data, buf->base + sz_processed, sz_copy);
+                memmove (g_edio24svr.buffer + g_edio24svr.sz_data, buf->base + sz_processed, sz_copy);
                 sz_processed += sz_copy;
-                edio24svr.sz_data += sz_copy;
+                g_edio24svr.sz_data += sz_copy;
             } else {
                 // error? full?
                 fprintf(stderr, "tcp svr no more received data to be push\n");
                 break;
             }
             fprintf(stderr, "tcp svr process data 2\n");
-            edio24svr_process_data (&edio24svr, stream);
+            edio24svr_process_data (&g_edio24svr, stream);
         }
         if (sz_processed < nread) {
             // we're stalled here, because the content can't be processed by the function edio24svr_process_data()
@@ -347,11 +368,11 @@ on_tcp_svr_accept (uv_stream_t *server, int status)
     }
 
     fprintf(stderr, "tcp svr accept()\n");
-    if (edio24svr.flg_used) {
+    if (g_edio24svr.flg_used) {
         fprintf(stderr, "device busy\n");
         return;
     }
-    edio24svr.flg_used = 1;
+    g_edio24svr.flg_used = 1;
 
     client = malloc(sizeof(uv_tcp_t));
     uv_tcp_init(loop, client);
@@ -363,7 +384,7 @@ on_tcp_svr_accept (uv_stream_t *server, int status)
             fprintf(stderr, "tcp svr accept client error %s\n", uv_strerror(status));
         }
     } else {
-        edio24svr.flg_used = 0;
+        g_edio24svr.flg_used = 0;
         fprintf(stderr, "tcp svr failed at accept, close client socket\n");
         uv_close((uv_handle_t *)client, on_tcp_svr_close);
     }
@@ -371,7 +392,7 @@ on_tcp_svr_accept (uv_stream_t *server, int status)
 
 /*****************************************************************************/
 int
-main_svr(const char * host, int port_udp, int port_tcp)
+main_svr(const char * host, int port_udp, int port_tcp, char flg_randfail)
 {
     struct sockaddr_in addr_udp;
     struct sockaddr_in addr_tcp;
@@ -379,9 +400,10 @@ main_svr(const char * host, int port_udp, int port_tcp)
     uv_tcp_t uvtcp;
 
     // setup service related info
-    memset (&edio24svr, 0, sizeof (edio24svr));
-    edio24svr.flg_used = 0;
-    edio24svr.sz_data = 0;
+    memset (&g_edio24svr, 0, sizeof (g_edio24svr));
+    g_edio24svr.flg_used = 0;
+    g_edio24svr.sz_data = 0;
+    g_edio24svr.flg_randfail = flg_randfail;
 
     loop = uv_default_loop();
 
@@ -422,6 +444,7 @@ help(const char * progname)
     printf ("\t-a <addr>\tE-DIO24 device address\n");
     printf ("\t-t <port>\tE-DIO24 command (TCP) listen port\n");
     printf ("\t-u <port>\tE-DIO24 discover (UDP) listen port\n");
+    printf ("\t-l\tSend out fail message randomly on requests.\n");
     printf ("\t-h\tPrint this message.\n");
     printf ("\t-v\tVerbose information.\n");
 }
@@ -436,6 +459,8 @@ usage (char *progname)
 int
 main(int argc, char * argv[])
 {
+    char flg_verbose = 0;
+    char flg_randfail = 0;
     const char * host = "0.0.0.0";
     int port_udp = EDIO24_PORT_DISCOVER;
     int port_tcp = EDIO24_PORT_COMMAND;
@@ -446,12 +471,14 @@ main(int argc, char * argv[])
         { "portudp",      1, 0, 'u' },
         { "porttcp",      1, 0, 't' },
 
+        { "randomfail",   0, 0, 'l' },
+
         { "help",         0, 0, 'h' },
         { "verbose",      0, 0, 'v' },
         { 0,              0, 0,  0  },
     };
 
-    while ((c = getopt_long( argc, argv, "a:u:t:hv", longopts, NULL )) != EOF) {
+    while ((c = getopt_long( argc, argv, "a:u:t:lhv", longopts, NULL )) != EOF) {
         switch (c) {
             case 'a':
                 if (strlen (optarg) > 0) {
@@ -468,11 +495,16 @@ main(int argc, char * argv[])
                     port_udp = atoi(optarg);
                 }
                 break;
+            case 'l':
+                flg_randfail = 1;
+                break;
+
             case 'h':
                 usage (argv[0]);
                 exit (0);
                 break;
             case 'v':
+                flg_verbose = 1;
                 break;
             default:
                 fprintf (stderr, "Unknown parameter: '%c'.\n", c);
@@ -482,5 +514,5 @@ main(int argc, char * argv[])
         }
     }
 
-    return main_svr(host, port_udp, port_tcp);
+    return main_svr(host, port_udp, port_tcp, flg_randfail);
 }

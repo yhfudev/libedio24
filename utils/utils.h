@@ -38,6 +38,8 @@ int read_file_lines(const char * fn_conf, void * userdata, int (* process)(off_t
 
 int cstr_strip(const char * orig, char * buf, size_t sz_buf);
 
+ssize_t parse_hex_buf(char * cstr, size_t cslen, uint8_t * buf, size_t szbuf);
+
 #ifndef NUM_ARRAY
 #define NUM_ARRAY(a) (sizeof(a)/sizeof(a[0]))
 #endif

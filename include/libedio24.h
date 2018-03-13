@@ -115,11 +115,14 @@ ssize_t edio24_pkt_create_ret_doutr  (uint8_t *buffer, size_t sz_buf, uint8_t fr
 ssize_t edio24_pkt_create_ret_doutw  (uint8_t *buffer, size_t sz_buf, uint8_t frame_id);
 ssize_t edio24_pkt_create_ret_dconfw (uint8_t *buffer, size_t sz_buf, uint8_t frame_id);
 
+const char * edio24_val2cstr_cmd(uint8_t cmd);
+const char * edio24_val2cstr_status(uint8_t status);
+
 int edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, size_t * sz_needed_in);
-int edio24_svr_process_tcp(uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_processed, size_t * sz_needed_in, size_t * sz_needed_out);
+int edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_processed, size_t * sz_needed_in, size_t * sz_needed_out);
 
 int edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in);
-int edio24_svr_process_udp(uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_needed_out);
+int edio24_svr_process_udp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_needed_out);
 #endif
 
 #ifdef __cplusplus

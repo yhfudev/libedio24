@@ -14,6 +14,12 @@
 
 #define DBGMSG(a,b,...)
 
+#if DEBUG
+#include "hexdump.h"
+#else
+#define hex_dump_to_fd(fd, fragment, size)
+#endif
+
 /**
  * \brief 折半方式查找记录
  *
@@ -457,6 +463,131 @@ TEST_CASE( .description="test utils.", .skip=0 ) {
             CIUT_LOG ("compare strip string idx=%d", i/2);
             REQUIRE(0 == test_strip_cstr(list_strip_cstr[i + 1], list_strip_cstr[i + 0]));
         }
+    }
+}
+#endif /* CIUT_ENABLED */
+
+/**
+ * \brief parse the long hex string and save it to a buffer
+ * \param cstr: the string
+ * \param cslen: the length of string
+ * \param buf: the buffer
+ * \param szbuf: the size of buffer
+ *
+ * \return >0 the length of the data in the buffer on successs, <0 on error
+ *
+ */
+ssize_t
+parse_hex_buf(char * cstr, size_t cslen, uint8_t * buf, size_t szbuf)
+{
+#define ER (uint8_t)(0xFF)
+    static uint8_t valmap[128] = {
+        ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER,
+        ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER,  0, 1, 2, 3, 4, 5, 6, 7,  8, 9,ER,ER,ER,ER,ER,ER,
+        ER,10,11,12,13,14,15,ER, ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER,
+        ER,10,11,12,13,14,15,ER, ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER, ER,ER,ER,ER,ER,ER,ER,ER,
+    };
+    size_t len = 0;
+    ssize_t ret = 0;
+    uint8_t val;
+    char *p;
+
+    if (NULL == cstr) {
+        return -1;
+    }
+    if (cslen == 0) {
+        return 0;
+    }
+    if (cslen < 3) {
+        return -1;
+    }
+    assert (strlen(cstr) == cslen);
+    assert (2 < cslen);
+    if (0 != strncmp("0x", cstr, 2)) {
+        return -1;
+    }
+    // skip first '0x'
+    p = cstr + 2;
+    while (len + 2 < cslen && ret < szbuf) {
+        assert (*p < sizeof(valmap));
+        val = valmap[(int)(*p)];
+        if (val == ER) {
+            return ret;
+        }
+        len ++;
+        if (len % 2 == 0) {
+            buf[ret] += val;
+            ret ++;
+        } else {
+            buf[ret] = val << 4;
+        }
+        p ++;
+    }
+    return ret;
+#undef ER
+}
+
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+#include <ciut.h>
+
+int
+test_parse_hex_buf(char * static_string, size_t len)
+{
+    ssize_t ret;
+    ssize_t i;
+    uint8_t buffer1[100] = "11223344556677889900";
+    uint8_t buffer2[100] = "aabbccddeeffgghhiijj";
+    uint8_t *p;
+
+    assert (sizeof(buffer1) > len);
+    assert (sizeof(buffer2) > len);
+    memset(buffer1, 0, sizeof(buffer1));
+    ret = parse_hex_buf(static_string, len, buffer1, sizeof(buffer1));
+    fprintf(stderr, "dump of parse_hex_buf, size=%" PRIiSZ ":\n", ret);
+    hex_dump_to_fd(STDERR_FILENO, (opaque_t *)(buffer1), ret);
+
+    memset(buffer2, 0, sizeof(buffer2));
+    strcpy((char *)buffer2, "0x");
+    p = buffer2 + 2;
+    for (i = 0; i < ret; i ++) {
+        sprintf((char *)p, "%02x", buffer1[i]);
+        p = p + 2;
+    }
+    // to lower case for string
+    memset(buffer1, 0, sizeof(buffer1));
+    for (i = 0; i < len; i ++) {
+        buffer1[i] = tolower(static_string[i]);
+    }
+    if (0 == strcmp((char *)buffer1, (char *)buffer2)) {
+        return 0;
+    }
+
+    return -1;
+}
+
+TEST_CASE( .description="test hex string.", .skip=0 ) {
+
+    SECTION("test hex string parameters") {
+        char buf[] = "11223344556677889900";
+        REQUIRE (0 > parse_hex_buf(NULL, 0, NULL, 0));
+        REQUIRE (0 > parse_hex_buf(NULL, 0, "", 0));
+        REQUIRE (0 == parse_hex_buf("", 0, "", 0));
+        REQUIRE (0 > parse_hex_buf("a", 1, "", 0));
+        REQUIRE (0 > parse_hex_buf("ab", 2, "", 0));
+        REQUIRE (0 > parse_hex_buf("a", 1, buf, sizeof(buf) - 1));
+        REQUIRE (0 > parse_hex_buf("ab", 2, buf, sizeof(buf) - 1));
+        REQUIRE (0 > parse_hex_buf("0x", 2, buf, sizeof(buf) - 1));
+        REQUIRE (0 == parse_hex_buf("0x0", 3, buf, sizeof(buf) - 1));
+        REQUIRE (0 > parse_hex_buf("ab0", 3, buf, sizeof(buf) - 1));
+    }
+    SECTION("test hex string") {
+        //CIUT_LOG ("test the hex");
+#define TEST_2HEX(static_string) REQUIRE (0 == test_parse_hex_buf(static_string, sizeof(static_string)-1))
+        TEST_2HEX("0x313924746201");
+        TEST_2HEX("0x983923492313442837987510983740");
+        TEST_2HEX("0xe932be9df8");
+        TEST_2HEX("0xeD3Ebe9Af8");
+#undef TEST_2HEX
     }
 }
 

@@ -632,7 +632,6 @@ cstr_line_get_column(const char * line, int column, char * ret_buf, size_t sz_bu
 }
 
 #if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
-
 #include <ciut.h>
 
 TEST_CASE( .description="test cstr_line_get_column.", .skip=0 ) {
@@ -881,7 +880,6 @@ get_ngcmac_of_board(const char *name_id, char * ret_buf, size_t sz_buf)
 }
 
 #if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
-
 #include <ciut.h>
 
 TEST_CASE( .description="test get_ip_of_board.", .skip=0 ) {
@@ -1537,6 +1535,7 @@ usage (char *progname)
 int
 main(int argc, char * argv[])
 {
+    char flg_verbose = 0;
     char * cluster = "";
     int c;
     struct option longopts[]  = {
@@ -1602,6 +1601,7 @@ main(int argc, char * argv[])
                 //exit (0);
                 break;
             case 'v':
+                flg_verbose = 1;
                 break;
             default:
                 fprintf (stderr, "Unknown parameter: '%c'.\n", c);
