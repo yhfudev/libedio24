@@ -21,7 +21,7 @@ AM_LDFLAGS += \
     `getconf LFS64_LDFLAGS` \
     $(NULL)
 
-AM_LDFLAGS += -L$(top_builddir)/src/ -ledio24
+#AM_LDFLAGS += -L$(top_builddir)/src/ -ledio24
 
 #AM_CFLAGS += `pkg-config --cflags libuv`
 #AM_LDFLAGS += `pkg-config --libs libuv`
@@ -68,11 +68,14 @@ check_PROGRAMS=ciutexc
 bin_PROGRAMS=edio24cli edio24sim gencctcmd
 
 gencctcmd_SOURCES= \
+    dummy.cpp \
     gencctcmd.c \
     utils.c \
     $(NULL)
 
 ciutexc_SOURCES= \
+    dummy.cpp \
+    ../src/libedio24.c \
     gencctcmd.c \
     utils.c \
     ciutexc.c \
@@ -114,14 +117,14 @@ edio24cli_LDADD = -luv -ldl
 #edio24cli_LDADD = $(top_builddir)/src/libedio24.la
 
 edio24cli_CPPFLAGS = $(AM_CFLAGS)
-edio24cli_LDFLAGS = $(AM_LDFLAGS)
+edio24cli_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
 #edio24cli_LDFLAGS = -luv -lz
 
 edio24sim_LDADD = -luv
 edio24sim_CPPFLAGS = $(AM_CFLAGS)
-edio24sim_LDFLAGS = $(AM_LDFLAGS)
+edio24sim_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
 
-#ciutexc_LDADD = -luv
+ciutexc_LDADD = -luv
 ciutexc_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
 ciutexc_LDFLAGS = $(AM_LDFLAGS)
 
