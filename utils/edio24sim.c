@@ -99,6 +99,7 @@ on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
         }
     }
 
+    fprintf(stderr, "udp svr read %d\n", nread);
     if (nread < 0) {
         fprintf(stderr, "udp svr read error %s\n", uv_err_name(nread));
         uv_close(handle, on_udp_svr_close);
@@ -110,21 +111,26 @@ on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
         fprintf (stderr, "udp svr recv from addr NULL!\n");
     } else {
         char sender[17] = { 0 };
-        uv_ip4_name((const struct sockaddr_in*) addr, sender, 16);
-        fprintf(stderr, "udp svr recv from addr %s\n", sender);
+        struct sockaddr_in *paddr = addr;
+        uv_ip4_name((const struct sockaddr_in*) addr, sender, sizeof(sender) - 1);
+        fprintf(stderr, "udp svr recv from addr %s, port %d\n", sender, ntohs(paddr->sin_port));
     }
 
     if ((NULL != buf) && (NULL != buf->base)) {
         if ((nread == 1) && ('D' == buf->base[0])) {
             /// discovery message
+            int ret;
             size_t sz_out;
             size_t sz_needed_out;
             udp_send_buf_t *req = (udp_send_buf_t*) malloc(sizeof(udp_send_buf_t));
             req->buf = uv_buf_init(buf->base, 64);
             sz_out = 64;
             sz_needed_out = 0;
-            edio24_svr_process_udp(flg_randfail, (uint8_t *)(buf->base), nread, (uint8_t *)(buf->base), &sz_out, &sz_needed_out);
-            if (sz_needed_out > 0) {
+
+            ret = edio24_svr_process_udp(flg_randfail, (uint8_t *)(buf->base), nread, (uint8_t *)(buf->base), &sz_out, &sz_needed_out);
+            fprintf(stderr, "udp svr discovery process ret=%d, needout=%d, flg_randfail=%s; g_flg_randfail=%s\n", ret, sz_needed_out, (flg_randfail?"use fail":"use normal"), (g_edio24svr.flg_randfail?"use fail":"use normal"));
+            if ((sz_out > 0) && (NULL != addr)) {
+                fprintf(stderr, "udp svr send back sz=%d\n", sz_out);
                 int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
                 if (r) {
                     /* error */
@@ -147,11 +153,13 @@ on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
                 }
             }
             //req->buf.len = 2;
-            int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
-            if (r) {
-                /* error */
-                fprintf(stderr, "udp svr error in write() %s\n", uv_strerror(r));
-                free(buf->base);
+            if (NULL != addr) {
+                int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
+                if (r) {
+                    /* error */
+                    fprintf(stderr, "udp svr error in write() %s\n", uv_strerror(r));
+                    free(buf->base);
+                }
             }
         } else {
             // ignore

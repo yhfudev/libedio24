@@ -1061,12 +1061,13 @@ edio24_svr_process_udp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, u
             *sz_needed_out = 0;
             return 0;
         }
-
         if (*sz_out < 64) {
             assert (NULL != sz_needed_out);
             *sz_needed_out = 64 - *sz_out;
             return 1;
         }
+        *sz_needed_out = 0;
+
         assert (NULL != buffer_out);
         memset(buffer_out, 0, 64);
         buffer_out[0] = 'D';
@@ -1517,7 +1518,7 @@ TEST_CASE( .name="edio24-svr-process", .description="test edio24_svr_process_xxx
         REQUIRE(0 > edio24_svr_process_udp(1, buffer, ret, buffer, &sz_out, NULL));
 
         sz_out = 0;
-        sz_needed_out = 0;
+        sz_needed_out = 5555;
         REQUIRE(1 == edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
         CIUT_LOG ("sz_out=%" PRIuSZ "; sz_needed_out=%" PRIuSZ ";", sz_out, sz_needed_out);
         REQUIRE(0 == sz_out);
@@ -1541,6 +1542,8 @@ TEST_CASE( .name="edio24-svr-process", .description="test edio24_svr_process_xxx
         sz_out = sizeof(buffer);
         assert (sz_out >= 64);
         REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, NULL));
+
+        sz_needed_out = 5555;
         REQUIRE(0 == edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
         CIUT_LOG ("sz_out=%" PRIuSZ "; sz_needed_out=%" PRIuSZ ";", sz_out, sz_needed_out);
         REQUIRE(64 == sz_out);
