@@ -28,16 +28,16 @@ You need to compile the library from source code by
 
 You can also generate the library API document by
 
-    cd doc/
-    make
+    make -C doc
 
 
-If you want to run the unit tests, please install the "Tiny unit test framework" from
+If you want to run the unit tests, please install the "Tiny unit test framework":
 
-    https://github.com/yhfudev/cpp-ci-unit-test.git
+    git clone https://github.com/yhfudev/cpp-ci-unit-test.git
 
 and run
 
+    ./configure --disable-shared --enable-static --with-ciut=`pwd`/cpp-ci-unit-test
     make check
 
 Usage

@@ -34,7 +34,7 @@ autoreconf -f -i -Wall,no-obsolete
 #./configure
 
 #./configure --enable-debug
-if [ 1 = 1 ]; then
+if [ 0 = 1 ]; then
   ./configure --disable-shared --enable-static
 
 else

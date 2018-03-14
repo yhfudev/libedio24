@@ -90,7 +90,7 @@ on_udp_svr_write(uv_udp_send_t *req, int status)
 }
 
 void
-on_udv_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const struct sockaddr *addr, unsigned flags)
+on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const struct sockaddr *addr, unsigned flags)
 {
     char flg_randfail = 0;
     if (g_edio24svr.flg_randfail) {
@@ -108,12 +108,13 @@ on_udv_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
 
     if (NULL == addr) {
         fprintf (stderr, "udp svr recv from addr NULL!\n");
-        free(buf->base);
     } else {
         char sender[17] = { 0 };
         uv_ip4_name((const struct sockaddr_in*) addr, sender, 16);
-        fprintf(stderr, "udp svr recv from %s\n", sender);
+        fprintf(stderr, "udp svr recv from addr %s\n", sender);
+    }
 
+    if ((NULL != buf) && (NULL != buf->base)) {
         if ((nread == 1) && ('D' == buf->base[0])) {
             /// discovery message
             size_t sz_out;
@@ -411,7 +412,7 @@ main_svr(const char * host, int port_udp, int port_tcp, char flg_randfail)
     uv_ip4_addr(host, port_udp, &addr_udp);
     uv_udp_init(loop, &uvudp);
     uv_udp_bind(&uvudp, (const struct sockaddr *)&addr_udp, UV_UDP_REUSEADDR);
-    uv_udp_recv_start(&uvudp, alloc_buffer, on_udv_srv_read);
+    uv_udp_recv_start(&uvudp, alloc_buffer, on_udp_srv_read);
 
     // setup the TCP listen port
     uv_ip4_addr(host, port_tcp, &addr_tcp);
