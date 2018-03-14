@@ -68,13 +68,11 @@ check_PROGRAMS=ciutexc
 bin_PROGRAMS=edio24cli edio24sim gencctcmd
 
 gencctcmd_SOURCES= \
-    dummy.cpp \
     gencctcmd.c \
     utils.c \
     $(NULL)
 
 ciutexc_SOURCES= \
-    dummy.cpp \
     ../src/libedio24.c \
     gencctcmd.c \
     utils.c \
@@ -82,13 +80,11 @@ ciutexc_SOURCES= \
     $(NULL)
 
 edio24cli_SOURCES= \
-    dummy.cpp \
     edio24cli.c \
     utils.c \
     $(NULL)
 
 edio24sim_SOURCES= \
-    dummy.cpp \
     edio24sim.c \
     $(NULL)
 
