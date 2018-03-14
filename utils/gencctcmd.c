@@ -1320,7 +1320,7 @@ do_getpower(FILE *fp, const char * arg_cluster, const char *arg_cmd)
     }
     val = 0;
     parse_values_atten (arg_cluster, &mask_c, &val);
-    mask_c &= 0xFFFF;
+    mask_c &= 0x1FFFF;
 
     if (NULL == arg_cmd) {
         arg_cmd = "";
@@ -1329,7 +1329,7 @@ do_getpower(FILE *fp, const char * arg_cluster, const char *arg_cmd)
     parse_values_atten (arg_cmd, &mask_p, &val);
     mask_p &= 0x01FF;
     mask_p >>= 1; // remove the position 0(for root)
-    fprintf(stderr, "do_getpower: arg_cluster='%s', arg_cmd='%s'; mask_p=0x%02X, val=%d\n", arg_cluster, arg_cmd, mask_p, val);
+    fprintf(stderr, "do_getpower: arg_cluster='%s', arg_cmd='%s'; mask_p=0x%02X, mask_c=0x%02X, val=%d\n", arg_cluster, arg_cmd, mask_p, mask_c, val);
 
     // skip the cluster 0 (root)
     for (i = 1; i <= 16; i ++) {
@@ -1378,7 +1378,7 @@ cb_cuit_check_output_dogetpower (FILE * outf, void * user_arg)
     return 0;
 }
 
-TEST_CASE( .description="test output cluster.", .skip=0 ) {
+TEST_CASE( .name="do-test", .description="test output cluster.", .skip=0 ) {
 
     int i;
     ciut_test_dotest_t args;
@@ -1402,6 +1402,44 @@ TEST_CASE( .description="test output cluster.", .skip=0 ) {
         "p=1", "p=",       "# ConnectTo 192.168.1.101	00:11:22:33:44:01	E-DIO24-334401 # 1\nDOutR\n\n",
         "p=1", "p=0,1,2",  "# ConnectTo 192.168.1.101	00:11:22:33:44:01	E-DIO24-334401 # 1\nDOutR\n\n",
         "p=1", "p=all",    "# ConnectTo 192.168.1.101	00:11:22:33:44:01	E-DIO24-334401 # 1\nDOutR\n\n",
+#if 1
+        "p=0,1", "p=all",    "# ConnectTo 192.168.1.101	00:11:22:33:44:01	E-DIO24-334401 # 1\nDOutR\n\n",
+        "p=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,15", "p=all",
+            "# ConnectTo 192.168.1.101	00:11:22:33:44:01	E-DIO24-334401 # 1\nDOutR\n\n"
+            "# ConnectTo 192.168.1.102	00:11:22:33:44:02	E-DIO24-334402 # 2\nDOutR\n\n"
+            "# ConnectTo 192.168.1.103	00:11:22:33:44:03	E-DIO24-334403 # 3\nDOutR\n\n"
+            "# ConnectTo 192.168.1.104	00:11:22:33:44:04	E-DIO24-334404 # 4\nDOutR\n\n"
+            "# ConnectTo 192.168.1.105	00:11:22:33:44:05	E-DIO24-334405 # 5\nDOutR\n\n"
+            "# ConnectTo 192.168.1.106	00:11:22:33:44:06	E-DIO24-334406 # 6\nDOutR\n\n"
+            "# ConnectTo 192.168.1.107	00:11:22:33:44:07	E-DIO24-334407 # 7\nDOutR\n\n"
+            "# ConnectTo 192.168.1.108	00:11:22:33:44:08	E-DIO24-334408 # 8\nDOutR\n\n"
+            "# ConnectTo 192.168.1.109	00:11:22:33:44:09	E-DIO24-334409 # 9\nDOutR\n\n"
+            "# ConnectTo 192.168.1.110	00:11:22:33:44:10	E-DIO24-334410 # 10\nDOutR\n\n"
+            "# ConnectTo 192.168.1.111	00:11:22:33:44:11	E-DIO24-334411 # 11\nDOutR\n\n"
+            "# ConnectTo 192.168.1.112	00:11:22:33:44:12	E-DIO24-334412 # 12\nDOutR\n\n"
+            "# ConnectTo 192.168.1.113	00:11:22:33:44:13	E-DIO24-334413 # 13\nDOutR\n\n"
+            "# ConnectTo 192.168.1.114	00:11:22:33:44:14	E-DIO24-334414 # 14\nDOutR\n\n"
+            "# ConnectTo 192.168.1.115	00:11:22:33:44:15	E-DIO24-334415 # 15\nDOutR\n\n"
+            ,
+        "p=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16", "p=all",
+            "# ConnectTo 192.168.1.101	00:11:22:33:44:01	E-DIO24-334401 # 1\nDOutR\n\n"
+            "# ConnectTo 192.168.1.102	00:11:22:33:44:02	E-DIO24-334402 # 2\nDOutR\n\n"
+            "# ConnectTo 192.168.1.103	00:11:22:33:44:03	E-DIO24-334403 # 3\nDOutR\n\n"
+            "# ConnectTo 192.168.1.104	00:11:22:33:44:04	E-DIO24-334404 # 4\nDOutR\n\n"
+            "# ConnectTo 192.168.1.105	00:11:22:33:44:05	E-DIO24-334405 # 5\nDOutR\n\n"
+            "# ConnectTo 192.168.1.106	00:11:22:33:44:06	E-DIO24-334406 # 6\nDOutR\n\n"
+            "# ConnectTo 192.168.1.107	00:11:22:33:44:07	E-DIO24-334407 # 7\nDOutR\n\n"
+            "# ConnectTo 192.168.1.108	00:11:22:33:44:08	E-DIO24-334408 # 8\nDOutR\n\n"
+            "# ConnectTo 192.168.1.109	00:11:22:33:44:09	E-DIO24-334409 # 9\nDOutR\n\n"
+            "# ConnectTo 192.168.1.110	00:11:22:33:44:10	E-DIO24-334410 # 10\nDOutR\n\n"
+            "# ConnectTo 192.168.1.111	00:11:22:33:44:11	E-DIO24-334411 # 11\nDOutR\n\n"
+            "# ConnectTo 192.168.1.112	00:11:22:33:44:12	E-DIO24-334412 # 12\nDOutR\n\n"
+            "# ConnectTo 192.168.1.113	00:11:22:33:44:13	E-DIO24-334413 # 13\nDOutR\n\n"
+            "# ConnectTo 192.168.1.114	00:11:22:33:44:14	E-DIO24-334414 # 14\nDOutR\n\n"
+            "# ConnectTo 192.168.1.115	00:11:22:33:44:15	E-DIO24-334415 # 15\nDOutR\n\n"
+            "# ConnectTo 192.168.1.116	00:11:22:33:44:16	E-DIO24-334416 # 16\nDOutR\n\n"
+            ,
+#endif
     };
 
     board_list_t *plst = &g_lst_edio24;

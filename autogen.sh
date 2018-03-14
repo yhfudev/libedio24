@@ -44,7 +44,8 @@ else
   if [ ! -d libuv ]; then
     git clone -q --depth=1 https://github.com/libuv/libuv.git
   fi
-  cd libuv && ./autogen.sh && ./configure && make clean && make -j8 && cd ..
+  cd cpp-ci-unit-test && git pull && cd ..
+  cd libuv && git pull && ./autogen.sh && ./configure && make clean && make -j8 && cd ..
   ./configure --disable-shared --enable-static --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
   make check
 fi
