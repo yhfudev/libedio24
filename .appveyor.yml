@@ -48,7 +48,7 @@ install:
 
 
 build_script:
-  - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git clone --depth=1 --branch v1.19.2 https://github.com/libuv/libuv.git && cd libuv && ./autogen.sh && ./configure && make clean && make -j8 && make install && cd ..")
+  - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git clone --depth=1 --branch v1.19.2 https://github.com/libuv/libuv.git && cd libuv && ./autogen.sh && ./configure --enable-static --disable-shared && make clean && make -j8 && make install && cd ..")
   - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git clone --depth=1 https://github.com/yhfudev/cpp-ci-unit-test.git")
   - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git submodule update --init && ./autogen.sh && ./configure --enable-static --disable-shared --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I$(cygpath ${APPVEYOR_BUILD_FOLDER}) && make DOCUMENT_FOLDER=$(cygpath %DOCUMENT_FOLDER%) install && make check && utils/ciutexc -")
 
