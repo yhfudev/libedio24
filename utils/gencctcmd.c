@@ -1525,7 +1525,7 @@ help(const char * progname)
     fprintf (stderr, "\t-d \tgenerate EDIO24 commands for reading power status\n");
 
     fprintf (stderr, "\t-i <edio24 file>\tEDIO24 config file\n");
-    fprintf (stderr, "\t-b <board file>\tCCT board config file\n");
+    fprintf (stderr, "\t-j <board file>\tCCT board config file\n");
     fprintf (stderr, "\t-a <ATTEN VALUES>\tgenerate EDIO24 commands for attenuation of a specify device\n");
     fprintf (stderr, "\t-p <POWER VALUES>\tgenerate EDIO24 commands for power on/off of a specify device\n");
 

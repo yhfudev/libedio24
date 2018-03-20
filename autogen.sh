@@ -34,8 +34,8 @@ autoreconf -f -i -Wall,no-obsolete
 #./configure
 
 #./configure --enable-debug
-if [ 1 = 1 ]; then
-  ./configure --disable-shared --enable-static
+if [ 0 = 1 ]; then
+  ./configure --disable-shared --enable-static --enable-coverage
 
 else
   if [ ! -d cpp-ci-unit-test ]; then
@@ -46,7 +46,7 @@ else
   fi
   cd cpp-ci-unit-test && git pull && cd ..
   cd libuv && git pull && ./autogen.sh && ./configure && make clean && make -j8 && cd ..
-  ./configure --disable-shared --enable-static --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
+  ./configure --disable-shared --enable-static --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
   make check
 fi
 

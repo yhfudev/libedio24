@@ -59,3 +59,7 @@ script:
   - g++ --version
   - ./autogen.sh && ./configure --enable-static --disable-shared --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} && make && sudo make install && make check && utils/ciutexc -
 
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
