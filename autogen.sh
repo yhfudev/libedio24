@@ -34,8 +34,9 @@ autoreconf -f -i -Wall,no-obsolete
 #./configure
 
 #./configure --enable-debug
-if [ 0 = 1 ]; then
-  ./configure --disable-shared --enable-static --enable-coverage
+if [ 1 = 1 ]; then
+  #./configure --disable-shared --enable-static --enable-coverage
+  ./configure --disable-shared --enable-static
 
 else
   if [ ! -d cpp-ci-unit-test ]; then
