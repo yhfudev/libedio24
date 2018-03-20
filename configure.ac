@@ -112,14 +112,14 @@ if test "x$enable_coverage" = "xyes"; then
         AC_MSG_ERROR([genhtml not found])
     fi
 
-    #COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
+    COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
     #COVERAGE_LDFLAGS="-fprofile-arcs"
-    COVERAGE_CFLAGS="--coverage"
+    #COVERAGE_CFLAGS="--coverage"
     COVERAGE_LDFLAGS="--coverage"
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)
 
-    CFLAGS="${COVERAGE_CFLAGS} ${CPPFLAGS}"
+    CPPFLAGS="${COVERAGE_CFLAGS} ${CPPFLAGS}"
     LDFLAGS="${COVERAGE_LDFLAGS} ${LDFLAGS}"
 
     AC_MSG_NOTICE([coverage enabled, adding "-g -O0" to CFLAGS])
