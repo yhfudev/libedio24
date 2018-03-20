@@ -115,7 +115,7 @@ if test "x$enable_coverage" = "xyes"; then
     COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
     #COVERAGE_LDFLAGS="-fprofile-arcs"
     #COVERAGE_CFLAGS="--coverage"
-    COVERAGE_LDFLAGS="--coverage"
+    COVERAGE_LDFLAGS="--coverage -lgcov"
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)
 
