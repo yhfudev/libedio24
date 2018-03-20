@@ -96,20 +96,6 @@ AC_ARG_ENABLE([debug],
 	[enable_debug=$enableval],
 	[enable_debug=no])
 AM_CONDITIONAL([DEBUG], [test $enable_debug = "yes"])
-if test "x$enable_debug" = "xyes"; then
-  changequote({,})
-  CFLAGS=`echo "$CFLAGS" | $SED -e 's/-O[0-9s]*//g'`
-  CXXFLAGS=`echo "$CXXFLAGS" | $SED -e 's/-O[0-9s]*//g'`
-  CFLAGS=`echo "$CFLAGS" | $SED -e 's/-g//g'`
-  CXXFLAGS=`echo "$CXXFLAGS" | $SED -e 's/-g//g'`
-  changequote([,])
-  dnl add -O0 only if GCC or ICC is used
-  if test "$GCC" = "yes" || test "$ICC" = "yes"; then
-    CFLAGS="$CFLAGS -g -O0 -Wall"
-    CXXFLAGS="$CXXFLAGS -g -O0 -Wall"
-  fi
-fi
-
 
 # coverage
 AC_ARG_ENABLE([coverage],
@@ -126,18 +112,42 @@ if test "x$enable_coverage" = "xyes"; then
         AC_MSG_ERROR([genhtml not found])
     fi
 
-    COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
-    COVERAGE_LDFLAGS="-fprofile-arcs"
+    #COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
+    #COVERAGE_LDFLAGS="-fprofile-arcs"
+    COVERAGE_CFLAGS="--coverage"
+    COVERAGE_LDFLAGS="--coverage"
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)
 
-    CPPFLAGS="${COVERAGE_CFLAGS} ${CPPFLAGS}"
+    CFLAGS="${COVERAGE_CFLAGS} ${CPPFLAGS}"
     LDFLAGS="${COVERAGE_LDFLAGS} ${LDFLAGS}"
 
     AC_MSG_NOTICE([coverage enabled, adding "-g -O0" to CFLAGS])
-    CFLAGS="${CFLAGS} -g -O0"
+    #CFLAGS="${CFLAGS} -g -O0"
+    enable_debug=yes
+    AC_SUBST(enable_debug)
 fi
 AM_CONDITIONAL([COVERAGE], [test x$enable_coverage = xyes])
+
+if test "x$enable_debug" = "xyes"  || "x$enable_coverage" = "xyes" ; then
+  changequote({,})
+  CFLAGS=`echo "$CFLAGS" | $SED -e 's/-O[0-9s]*//g'`
+  CXXFLAGS=`echo "$CXXFLAGS" | $SED -e 's/-O[0-9s]*//g'`
+  CPPFLAGS=`echo "$CPPFLAGS" | $SED -e 's/-O[0-9s]*//g'`
+  LDFLAGS=`echo "$LDFLAGS" | $SED -e 's/-O[0-9s]*//g'`
+  CFLAGS=`echo "$CFLAGS" | $SED -e 's/ -g //g'`
+  CXXFLAGS=`echo "$CXXFLAGS" | $SED -e 's/ -g //g'`
+  CPPFLAGS=`echo "$CPPFLAGS" | $SED -e 's/ -g //g'`
+  LDFLAGS=`echo "$LDFLAGS" | $SED -e 's/ -g //g'`
+  changequote([,])
+  dnl add -O0 only if GCC or ICC is used
+  if test "$GCC" = "yes" || test "$ICC" = "yes"; then
+    CFLAGS="$CFLAGS -g -O0 -Wall"
+    CXXFLAGS="$CXXFLAGS -g -O0 -Wall"
+    CPPFLAGS="$CPPFLAGS -g -O0 -Wall"
+    #LDFLAGS="$LDFLAGS -g -O0 -Wall"
+  fi
+fi
 
 
 # Checks for header files.

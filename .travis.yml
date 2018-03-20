@@ -12,8 +12,9 @@ before_install:
       # Install lcov 1.11
       - wget http://downloads.sourceforge.net/ltp/lcov-1.13.tar.gz
       - tar -xvf lcov-1.13.tar.gz
-      - cd lcov-1.13 && sudo make install
+      - cd lcov-1.13 && make && sudo make install
       - cd ..
+      - lcov --version
 
 install:
   - git clone https://github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_REPO_SLUG
