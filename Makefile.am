@@ -1,4 +1,7 @@
+
 SUBDIRS=src utils
+
+ACLOCAL_AMFLAGS = -I m4
 
 #DOC_FILES= \
 #    $(top_srcdir)/doc/cndoc.tex \

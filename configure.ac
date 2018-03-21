@@ -7,6 +7,9 @@ AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE(-Wall subdir-objects)
 
+# Specify the directory of additional local Autoconf macros.
+AC_CONFIG_MACRO_DIR([m4])
+
 #magic for conditional check in Makefile:
 MK=''; AC_SUBST(MK)
 SED=sed
@@ -27,6 +30,9 @@ AC_PROG_RANLIB
 LT_PREREQ([2.2])
 LT_INIT([shared static])
 #LT_INIT([disable-static])
+LT_LANG([C])
+LT_LANG([C++])
+
 
 dnl Disable doc generation with doxygen option
 AC_ARG_ENABLE(doxygen-doc,
@@ -112,10 +118,34 @@ if test "x$enable_coverage" = "xyes"; then
         AC_MSG_ERROR([genhtml not found])
     fi
 
-    COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
+    COVERAGE_CFLAGS=
+    COVERAGE_LDFLAGS=
+    #COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
     #COVERAGE_LDFLAGS="-fprofile-arcs"
     #COVERAGE_CFLAGS="--coverage"
-    COVERAGE_LDFLAGS="--coverage"
+    #COVERAGE_LDFLAGS="--coverage"
+
+    AS_CASE([${CC}], [*clang*],
+      [AX_CHECK_COMPILE_FLAG([-fprofile-instr-generate],
+      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-instr-generate"])])
+    AS_CASE([${CC}], [*clang*],
+      [AX_CHECK_COMPILE_FLAG([-fcoverage-mapping],
+      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fcoverage-mapping"])])
+
+    AS_CASE([${CC}], [*gcc*],
+      [AX_CHECK_COMPILE_FLAG([-fprofile-arcs],
+        [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-arcs"])])
+    AS_CASE([${CC}], [*gcc*],
+      [AX_CHECK_COMPILE_FLAG([-ftest-coverage],
+        [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -ftest-coverage"])])
+
+    AS_CASE([${CC}], [*],
+      [AX_CHECK_LINK_FLAG([--coverage],
+        [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fprofile-arcs"])])
+    AS_CASE([${CC}], [*],
+      [AX_CHECK_LINK_FLAG([--coverage],
+        [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS --coverage"])])
+
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)
 
