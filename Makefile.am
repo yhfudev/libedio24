@@ -1,5 +1,5 @@
 
-SUBDIRS=src utils
+SUBDIRS= src utils
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -54,17 +54,32 @@ ChangeLog: .git
 
 
 if COVERAGE
+
+#COV_TOP=$(abspath $(lastword $(top_builddir)))
+
+COV_ARG_gcc=
+COV_ARG_clang=--gcov-tool $(abs_top_builddir)/gcov-tool-$(CC)
+COV_DEPEND_gcc=
+COV_DEPEND_clang=$(abs_top_builddir)/gcov-tool-$(CC)
+
+$(abs_top_builddir)/gcov-tool-clang:
+	@echo "CC=$(CC)"
+	@echo "#!/bin/bash" > $@
+	@echo "exec llvm-cov gcov \"\$$@\"" >> $@
+	@chmod 755 $@
+
 cov-reset-common:
 	@rm -rf $(top_builddir)/coverage
-	@find $(top_builddir)/src $(top_builddir)/utils -name "*.gcda" -delete
+	@find $(top_builddir) -name "*.gc[nd][ao]" -delete
 
 cov-reset: cov-reset-common
 	@lcov --zerocounters --directory $(top_builddir)
 
-cov-report:
+cov-report: $(COV_DEPEND_$(CC))
 	@mkdir $(top_builddir)/coverage
+	@echo "PWD=`pwd`"
 	lcov -c -o $(top_builddir)/coverage/coverage.info -d $(top_builddir) \
-		 --rc lcov_branch_coverage=1
+		 --rc lcov_branch_coverage=1 $(COV_ARG_$(CC))
 	lcov -r $(top_builddir)/coverage/coverage.info '*/tests/*' '*/suites/*' '/usr*' \
 		 -o $(abs_top_builddir)/coverage/coverage.cleaned.info \
 		 --rc lcov_branch_coverage=1
@@ -79,9 +94,17 @@ coverage:
 	@$(MAKE) cov-reset
 	@$(MAKE) check
 	@$(MAKE) cov-report
+
+clean-local-coverage: cov-reset-common
+	@rm -f $(abs_top_builddir)/gcov-tool-$(CC)
+
 else
+clean-local-coverage:
+	-rm -rf dummy.cpp
+
 coverage:
 	@echo "reconfigure with --enable-coverage"
 endif
 
+clean-local: clean-local-coverage
 

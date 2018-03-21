@@ -18,13 +18,17 @@ SED=sed
 AM_PROG_AR
 AC_PROG_CXX
 AC_PROG_AWK
-AC_PROG_CC
+AC_PROG_CC(clang llvm-gcc gcc)
+AC_PROG_CXX(clang++ llvm-g++ g++)
 AC_PROG_CPP
 AC_PROG_LEX
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
+
+AC_LANG([C])
+AC_LANG([C++])
 
 # Checks for libraries.
 LT_PREREQ([2.2])
@@ -33,6 +37,7 @@ LT_INIT([shared static])
 LT_LANG([C])
 LT_LANG([C++])
 
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 
 dnl Disable doc generation with doxygen option
 AC_ARG_ENABLE(doxygen-doc,
@@ -120,10 +125,6 @@ if test "x$enable_coverage" = "xyes"; then
 
     COVERAGE_CFLAGS=
     COVERAGE_LDFLAGS=
-    #COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
-    #COVERAGE_LDFLAGS="-fprofile-arcs"
-    #COVERAGE_CFLAGS="--coverage"
-    #COVERAGE_LDFLAGS="--coverage"
 
     AS_CASE([${CC}], [*clang*],
       [AX_CHECK_COMPILE_FLAG([-fprofile-instr-generate],
@@ -131,20 +132,32 @@ if test "x$enable_coverage" = "xyes"; then
     AS_CASE([${CC}], [*clang*],
       [AX_CHECK_COMPILE_FLAG([-fcoverage-mapping],
       [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fcoverage-mapping"])])
+    AS_CASE([${CC}], [*clang*],
+      [AX_CHECK_COMPILE_FLAG([--coverage],
+      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS --coverage"])])
 
     AS_CASE([${CC}], [*gcc*],
       [AX_CHECK_COMPILE_FLAG([-fprofile-arcs],
-        [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-arcs"])])
+      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-arcs"])])
     AS_CASE([${CC}], [*gcc*],
       [AX_CHECK_COMPILE_FLAG([-ftest-coverage],
-        [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -ftest-coverage"])])
+      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -ftest-coverage"])])
+    AS_CASE([${CC}], [*gcc*],
+      [AX_CHECK_COMPILE_FLAG([--coverage],
+      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS --coverage"])])
 
     AS_CASE([${CC}], [*],
-      [AX_CHECK_LINK_FLAG([--coverage],
-        [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fprofile-arcs"])])
+      [AX_CHECK_LINK_FLAG([-fprofile-arcs],
+      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fprofile-arcs"])])
     AS_CASE([${CC}], [*],
       [AX_CHECK_LINK_FLAG([--coverage],
-        [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS --coverage"])])
+      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS --coverage"])])
+    AS_CASE([${CC}], [*],
+      [AX_CHECK_LINK_FLAG([-fprofile-instr-generate],
+      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fprofile-instr-generate"])])
+    AS_CASE([${CC}], [*],
+      [AX_CHECK_LINK_FLAG([-fcoverage-mapping],
+      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fcoverage-mapping"])])
 
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)

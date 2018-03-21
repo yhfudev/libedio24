@@ -12,7 +12,9 @@ DEFS+= \
 
 AM_CFLAGS+= \
     -I$(top_srcdir)/src \
-    -I$(top_builddir)/include/ \
+    -I$(top_srcdir)/include/ \
+    -I$(top_builddir)/ \
+    -I$(top_builddir)/src/ \
     $(NULL)
 
 AM_LDFLAGS += \
@@ -73,7 +75,6 @@ gencctcmd_SOURCES= \
     $(NULL)
 
 ciutexc_SOURCES= \
-    ../src/libedio24.c \
     gencctcmd.c \
     utils.c \
     ciutexc.c \
@@ -102,28 +103,24 @@ clean-local-dummy:
 ciutexc.c:
 	-echo "#define CIUT_PLACE_MAIN 1" > $@
 	-echo "#include <ciut.h>" >> $@
+	-echo "#include \"../src/libedio24.c\"" >> $@
 	-echo "int main(int argc, char * argv[]) { return ciut_main(argc, argv); }" >> $@
 clean-local-check:
 	-rm -rf ciutexc.c
 
 clean-local: clean-local-check clean-local-dummy
 
-#edio24cli_LDADD = $(top_builddir)/src/libedio24.la -luv
-edio24cli_LDADD = -luv -ldl
-#edio24cli_LDADD = $(top_builddir)/src/libedio24.la
-
+edio24cli_LDADD = $(top_builddir)/src/libedio24.la -luv -ldl
 edio24cli_CPPFLAGS = $(AM_CFLAGS)
-edio24cli_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
-#edio24cli_LDFLAGS = -luv -lz
+#edio24cli_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
+edio24cli_LDFLAGS = $(AM_LDFLAGS)
 
-edio24sim_LDADD = -luv
+edio24sim_LDADD = $(top_builddir)/src/libedio24.la -luv -ldl
 edio24sim_CPPFLAGS = $(AM_CFLAGS)
-edio24sim_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
+#edio24sim_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
+edio24sim_LDFLAGS = $(AM_LDFLAGS)
 
 ciutexc_LDADD = -luv
 ciutexc_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
 ciutexc_LDFLAGS = $(AM_LDFLAGS)
-
-
-
 
