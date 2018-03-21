@@ -52,10 +52,10 @@ compiler:
 matrix:
   include:
     - os: linux
-      dist: trusty
+      dist: artful
       compiler: gcc
     - os: linux
-      dist: trusty
+      dist: artful
       compiler: clang
 
 script:

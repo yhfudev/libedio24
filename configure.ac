@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.60])
-AC_INIT(libedio24, 1.0.0, yhfudev@gmail.com)
+AC_INIT(libedio24, 0.1.0, yhfudev@gmail.com)
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE(-Wall subdir-objects)
@@ -115,7 +115,7 @@ if test "x$enable_coverage" = "xyes"; then
     COVERAGE_CFLAGS="-fprofile-arcs -ftest-coverage"
     #COVERAGE_LDFLAGS="-fprofile-arcs"
     #COVERAGE_CFLAGS="--coverage"
-    COVERAGE_LDFLAGS="--coverage -lgcov"
+    COVERAGE_LDFLAGS="--coverage"
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)
 
