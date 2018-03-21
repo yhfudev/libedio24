@@ -55,8 +55,6 @@ ChangeLog: .git
 
 if COVERAGE
 
-#COV_TOP=$(abspath $(lastword $(top_builddir)))
-
 COV_ARG_gcc=
 COV_ARG_clang=--gcov-tool $(abs_top_builddir)/gcov-tool-$(CC)
 COV_DEPEND_gcc=
