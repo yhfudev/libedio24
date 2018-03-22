@@ -48,8 +48,8 @@ else
   cd cpp-ci-unit-test && git pull && cd ..
   cd libuv && git pull && ./autogen.sh && ./configure && make clean && make -j8 && cd ..
 
-  #CC=clang
-  #CXX=clang++
+  which "$CC" || CC=gcc
+  which "$CXX" || CXX=g++
   CC=$CC CXX=$CXX ./configure --disable-shared --enable-static --enable-valgrind --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
   make clean; make coverage CC=$CC CXX=$CXX
 fi
