@@ -7,9 +7,12 @@ env:
 
 before_install:
   - eval "${MATRIX_EVAL}"
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew doctor          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gnupg   ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew --env           ; fi
   - curl -sSL https://rvm.io/mpapis.asc | gpg --import - && rvm get head
   - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install graphviz; fi
   #- sudo apt-get install libuv1
   # Install lcov 1.11
@@ -34,7 +37,7 @@ addons:
       version: $TRAVIS_COMMIT
       description: "Build submitted via Travis CI"
     notification_email: yhfudev@gmail.com
-    build_command_prepend: "./autogen.sh && ./configure --enable-static --disable-shared --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} && make clean"
+    build_command_prepend: "./autogen.sh"
     build_command:   make -k
     branch_pattern: coverity_scan
   apt:
@@ -198,7 +201,7 @@ script:
   - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then if [ -x /usr/bin/g++-5 ]; then sudo unlink /usr/bin/g++ && sudo ln -s /usr/bin/g++-5 /usr/bin/g++; fi; fi
   - gcc --version
   - g++ --version
-  - ./autogen.sh && ./configure --enable-static --disable-shared --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} && make -j 8 CC=${CC} CXX=${CXX} && sudo make install CC=${CC} CXX=${CXX} && make check CC=${CC} CXX=${CXX} && make clean && make coverage CC=${CC} CXX=${CXX} && utils/ciutexc -
+  - ./autogen.sh && CC=${CC} CXX=${CXX} ./configure --enable-static --disable-shared --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} && make -j 8 CC=${CC} CXX=${CXX} && sudo make install CC=${CC} CXX=${CXX} && make check CC=${CC} CXX=${CXX} && make clean && make coverage CC=${CC} CXX=${CXX} && utils/ciutexc -
 
 
 after_success:
