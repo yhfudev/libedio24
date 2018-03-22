@@ -291,7 +291,7 @@ fread_lines (FILE *fp, void * userdata, int (* process)(off_t pos, char * buf, s
 int
 read_file_lines(const char * fn_conf, void * userdata, int (* process)(off_t pos, char * buf, size_t size, void *userdata))
 {
-    int ret;
+    int ret = 0;
     FILE *fp = NULL;
     if (NULL == fn_conf) {
         fp = stdin;
@@ -304,7 +304,10 @@ read_file_lines(const char * fn_conf, void * userdata, int (* process)(off_t pos
         return -1;
     }
     assert (NULL != fp);
-    ret = fread_lines (fp, userdata, process);
+    ret = 0;
+    if (NULL != process) {
+        ret = fread_lines (fp, userdata, process);
+    }
     if (stdin != fp) {
         fclose(fp);
     }
@@ -312,14 +315,87 @@ read_file_lines(const char * fn_conf, void * userdata, int (* process)(off_t pos
 }
 
 #if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
-/*#include <ciut.h>
+#include <ciut.h>
 
-TEST_CASE( .description="test utils.", .skip=0 ) {
-
-    SECTION("test read file") {
+static int
+process_test_readln (off_t pos, char * buf, size_t size, void *userdata)
+{
+    int *ret_val = userdata;
+    int val;
+    if (NULL != userdata) {
+        val = atoi(buf);
+        *ret_val += val;
     }
+    return 0;
 }
-*/
+
+static int
+create_test_file(const char * fn_test)
+{
+    FILE *fp = NULL;
+
+    assert (NULL != fn_test);
+
+    unlink(fn_test);
+
+    fp = fopen(fn_test, "w+");
+    if (NULL == fp) {
+        fprintf(stderr, "Error in create file: '%s'\n", fn_test);
+        return -1;
+    }
+    fprintf(fp, "1\n");
+    fprintf(fp, "2\n");
+    fprintf(fp, "3\n");
+
+    fclose(fp);
+    return 0;
+}
+
+TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
+#define FN_TEST "/tmp/tmp-test.txt"
+
+    //REQUIRE(0 > create_test_file("/dev/zero"));
+
+    CIUT_LOG("Create a new file: '%s'", FN_TEST);
+    REQUIRE(0 == create_test_file(FN_TEST));
+
+
+    SECTION("test read file parameters") {
+        FILE * fp_old = stdin;
+        FILE * fp;
+        int ret;
+
+        fp = fopen(FN_TEST, "r");
+        if (NULL != fp) {
+            stdin = fp;
+            ret = read_file_lines(NULL, NULL, NULL);
+            fclose(fp);
+            stdin = fp_old;
+            REQUIRE(0 == ret);
+        }
+
+        fp = fopen(FN_TEST, "r");
+        if (NULL != fp) {
+            stdin = fp;
+            ret = read_file_lines(NULL, NULL, process_test_readln);
+            fclose(fp);
+            stdin = fp_old;
+            REQUIRE(0 == ret);
+        }
+#define FN_TEST2 "/tmp/tmp-noexist.txt"
+        unlink(FN_TEST2);
+        REQUIRE(0 > read_file_lines(FN_TEST2, NULL, NULL));
+
+        REQUIRE(0 == read_file_lines(FN_TEST, NULL, NULL));
+    }
+    SECTION("test read file") {
+        /* create a new file */
+        int val = 0;
+        REQUIRE(0 == read_file_lines(FN_TEST, &val, process_test_readln));
+        REQUIRE(6 == val);
+    }
+    unlink(FN_TEST);
+}
 #endif /* CIUT_ENABLED */
 
 
@@ -402,6 +478,7 @@ TEST_CASE( .description="test utils.", .skip=0 ) {
         REQUIRE(-1 == cstr_strip(NULL, NULL, 0));
         REQUIRE(-1 == cstr_strip("", NULL, 0));
         REQUIRE(-1 == cstr_strip(NULL, buf, 0));
+        REQUIRE(-1 == cstr_strip("", buf, 0));
         REQUIRE(0 == cstr_strip("", buf, sizeof(buf)));
 #define CSTR_LARGE "abcdefghijklmnopqrstuvwxyz"
         assert (sizeof(CSTR_LARGE) > sizeof(buf));

@@ -1185,6 +1185,7 @@ edio24_svr_process_udp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, u
     } else if ('D' == buffer_in[0]) {
         if (flg_force_fail) {
             assert (NULL != sz_needed_out);
+            *sz_out = 0;
             *sz_needed_out = 0;
             return 0;
         }
@@ -1917,12 +1918,54 @@ TEST_CASE( .name="edio24-read", .description="test edio24 buffers for edio24_pkt
         EDIO24_V2S(MSG_ERROR_OTHER);        // Command failed due to some other error
 #undef EDIO24_V2S
     }
+}
+
+TEST_CASE( .name="edio24-read", .description="test edio24 buffers for edio24_pkt_read_hdr_xxx.", .skip=0 ) {
+    uint8_t buffer[80];
+    uint8_t frame_id = 0;
+    ssize_t ret;
+
     SECTION("test parameters for edio24_cli_verify_xxx") {
+        int ret;
+        size_t sz_out = 0;
+        size_t sz_needed_out = 0;
         uint32_t val32 = 0;
         assert (4 == sizeof(val32));
 
+        REQUIRE(0 > edio24_cli_verify_udp(NULL, 0));
+        REQUIRE(0 > edio24_cli_verify_udp(buffer, 0));
+        REQUIRE(0 > edio24_cli_verify_udp(NULL, sizeof(buffer)));
+
         // int edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
+        REQUIRE(1 == edio24_pkt_create_discoverydev(buffer, 1));
+        //int edio24_svr_process_udp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in, uint8_t * buffer_out, size_t *sz_out, size_t * sz_needed_out)
+        sz_needed_out = 5555;
+        sz_out = sizeof(buffer);
+        assert (sz_out >= 64);
+        ret = edio24_svr_process_udp(0, buffer, 1, buffer, &sz_out, &sz_needed_out);
+        REQUIRE(0 == ret);
+        REQUIRE(64 == sz_out);
+        REQUIRE(0 == edio24_cli_verify_udp(buffer, sz_out));
+        REQUIRE(0 > edio24_cli_verify_udp(NULL, 0));
+        REQUIRE(0 > edio24_cli_verify_udp(buffer, 0));
+        REQUIRE(0 > edio24_cli_verify_udp(NULL, sz_out));
+
+        buffer[0] ++;
+        REQUIRE(0 > edio24_cli_verify_udp(buffer, sz_out));
+        REQUIRE(0 > edio24_cli_verify_udp(NULL, 0));
+        REQUIRE(0 > edio24_cli_verify_udp(buffer, 0));
+        REQUIRE(0 > edio24_cli_verify_udp(NULL, sz_out));
+
         // int edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, size_t * sz_needed_in)
+        size_t sz_processed;
+        size_t sz_needed_in;
+        frame_id = 0;
+        ret = edio24_pkt_create_cmd_blinkled(buffer, MSG_INDEX_DATA + 1 + 1, &frame_id, 0);
+        REQUIRE(MSG_INDEX_DATA + 1 + 1 == ret);
+        REQUIRE(1 == frame_id);
+        REQUIRE(0 == edio24_cli_verify_tcp(buffer, ret, &sz_processed, &sz_needed_in));
+        buffer[0] ++;
+        REQUIRE(0 != edio24_cli_verify_tcp(buffer, ret, &sz_processed, &sz_needed_in));
 
     }
 }
@@ -2119,6 +2162,12 @@ TEST_CASE( .name="edio24-svr-process", .description="test edio24_svr_process_xxx
         REQUIRE(0 > edio24_svr_process_udp(0, buffer, 0, NULL, NULL, NULL));
 
         REQUIRE(0 > edio24_svr_process_tcp(0, buffer, 0, NULL, NULL, NULL, NULL, NULL));
+        sz_out = sizeof(buffer);
+        sz_needed_out = 0;
+        REQUIRE(0 > edio24_svr_process_udp(0, buffer, 0, buffer, &sz_out, NULL));
+        REQUIRE(0 != edio24_svr_process_udp(0, buffer, 0, buffer, &sz_out, &sz_needed_out));
+        sz_out = 0;
+        REQUIRE(0 != edio24_svr_process_udp(0, buffer, 0, buffer, &sz_out, &sz_needed_out));
 
         ret = edio24_pkt_create_opendev(buffer, sizeof(buffer), 0x1A);
         REQUIRE(0 < ret);
@@ -2157,12 +2206,19 @@ TEST_CASE( .name="edio24-svr-process", .description="test edio24_svr_process_xxx
         sz_out = sizeof(buffer);
         assert (sz_out >= 64);
         REQUIRE(0 > edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, NULL));
+        sz_out = 0;
+        REQUIRE(0 != edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
+        REQUIRE(64 == sz_needed_out);
 
+        sz_out = sizeof(buffer);
         sz_needed_out = 5555;
         REQUIRE(0 == edio24_svr_process_udp(0, buffer, ret, buffer, &sz_out, &sz_needed_out));
         CIUT_LOG ("sz_out=%" PRIuSZ "; sz_needed_out=%" PRIuSZ ";", sz_out, sz_needed_out);
         REQUIRE(64 == sz_out);
         REQUIRE(0 == sz_needed_out);
+        REQUIRE(0 == edio24_svr_process_udp(1, buffer, ret, buffer, &sz_out, &sz_needed_out));
+        REQUIRE(0 == sz_needed_out);
+        REQUIRE(0 == sz_out);
     }
 }
 
