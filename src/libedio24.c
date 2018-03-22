@@ -87,6 +87,7 @@ edio24_pkt_checksum(void *buffer, int length)
 {
     int i;
     unsigned char checksum = 0;
+    assert (NULL != buffer);
 
     for (i = 0; i < length; i++) {
         checksum += ((unsigned char*) buffer)[i];
@@ -108,10 +109,14 @@ edio24_pkt_create_opendev (uint8_t *buffer, size_t sz_buf, uint32_t connect_code
 {
     ssize_t ret = 0;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (sz_buf < 5) {
         return -1;
     }
     ret = 5;
+    assert (NULL != buffer);
     buffer[0] = 'C'; //0x43;
     buffer[1] =  connect_code        & 0xFF;
     buffer[2] = (connect_code >>  8) & 0xFF;
@@ -135,10 +140,14 @@ edio24_pkt_create_discoverydev (uint8_t *buffer, size_t sz_buf)
 {
     ssize_t ret = 0;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (sz_buf < 1) {
         return -1;
     }
     ret = 1;
+    assert (NULL != buffer);
     buffer[0] = 'D'; //0x44;
 
     return ret;
@@ -156,6 +165,9 @@ edio24_pkt_create_cmd_dinr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id)
 {
     static const int data_count_dinr = 0;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (NULL == frame_id) {
         return -1;
     }
@@ -163,6 +175,7 @@ edio24_pkt_create_cmd_dinr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id)
         fprintf(stderr, "edio24 warning: doutr buffer size limited.\n");
         return -1;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_DIN_R;
     buffer[MSG_INDEX_START]          = MSG_START;
     buffer[MSG_INDEX_FRAME]          = *frame_id; // increment frame ID with every send
@@ -193,6 +206,7 @@ edio24_pkt_create_cmd_doutr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id)
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_DOUT_R;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -214,6 +228,7 @@ edio24_pkt_create_cmd_dconfr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_DCONF_R;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -235,6 +250,7 @@ edio24_pkt_create_cmd_dcounterr (uint8_t *buffer, size_t sz_buf, uint8_t * frame
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_COUNTER_R;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -258,6 +274,7 @@ edio24_pkt_create_cmd_dcounterw (uint8_t *buffer, size_t sz_buf, uint8_t * frame
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_COUNTER_W;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -281,6 +298,7 @@ edio24_pkt_create_cmd_reset (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id)
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_RESET;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -304,6 +322,7 @@ edio24_pkt_create_cmd_status (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_STATUS;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -327,6 +346,7 @@ edio24_pkt_create_cmd_netconf (uint8_t *buffer, size_t sz_buf, uint8_t * frame_i
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_NETWORK_CONF;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -349,12 +369,16 @@ edio24_pkt_create_cmd_firmware (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
 {
     static const int data_count_firmware = 2;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (NULL == frame_id) {
         return -1;
     }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_firmware) {
         return -1;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_BLINKLED;
     buffer[MSG_INDEX_DATA]           = 0xAD; // key
     buffer[MSG_INDEX_DATA + 1]       = 0xAD; // key
@@ -384,12 +408,16 @@ edio24_pkt_create_cmd_blinkled (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
 {
     static const int data_count_blinkled = 1;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (NULL == frame_id) {
         return -1;
     }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_blinkled) {
         return -1;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_BLINKLED;
     buffer[MSG_INDEX_DATA]           =   value       & 0xFF;
     buffer[MSG_INDEX_START]          = MSG_START;
@@ -421,12 +449,16 @@ edio24_pkt_create_cmd_confmemr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
 {
     static const int data_count_confmemr = 4;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (NULL == frame_id) {
         return -1;
     }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_confmemr) {
         return -1;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]  = CMD_CONF_MEM_R;
     buffer[MSG_INDEX_DATA]     =  address        & 0xFF;
     buffer[MSG_INDEX_DATA + 1] = (address >>  8) & 0xFF;
@@ -451,7 +483,7 @@ edio24_pkt_create_cmd_confmemr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
  * \param sz_buf:   the byte size of the buffer
  * \param frame_id: the pointer to the frame id record
  * \param address:  the start address for writing (0-0xf)
- * \param count:    the byte size of the conent, the buffer_data should be equal or larger than this value
+ * \param count:    the byte size of the contents in the buffer_data, the size of buffer_data should be equal or larger than it
  * \param buffer_data: the data to be sent to device
  * \return <0 on fail, >0 the size of packet
  *
@@ -470,18 +502,26 @@ edio24_pkt_create_cmd_confmemw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
 {
     int data_count_confmemw = 2;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (NULL == frame_id) {
         return -1;
     }
     if (sz_buf < MSG_INDEX_DATA + 1 + data_count_confmemw) {
         return -1;
     }
+    assert (count >= 0);
     data_count_confmemw = 2 + count;
 
+    assert (NULL != buffer);
+    if (count > 0) {
+        memmove (&buffer[MSG_INDEX_DATA + 2], buffer_data, count); // in case the buffer and buffer_date are the same
+    }
     buffer[MSG_INDEX_COMMAND]  = CMD_CONF_MEM_W;
     buffer[MSG_INDEX_DATA]     =  address        & 0xFF;
     buffer[MSG_INDEX_DATA + 1] = (address >>  8) & 0xFF;
-    memmove (&buffer[MSG_INDEX_DATA + 2], buffer_data, count);
+    //if (count > 0) memmove (&buffer[MSG_INDEX_DATA + 2], buffer_data, count);
     buffer[MSG_INDEX_START]          = MSG_START;
     buffer[MSG_INDEX_FRAME]          = *frame_id; // increment frame ID with every send
     buffer[MSG_INDEX_STATUS]         = MSG_SUCCESS;
@@ -513,6 +553,7 @@ edio24_pkt_create_cmd_usermemr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_USR_MEM_R;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -542,6 +583,7 @@ edio24_pkt_create_cmd_usermemw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_USR_MEM_W;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -565,6 +607,7 @@ edio24_pkt_create_cmd_setmemr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_i
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_SET_MEM_R;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -594,6 +637,7 @@ edio24_pkt_create_cmd_setmemw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_i
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_SET_MEM_W;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -623,6 +667,7 @@ edio24_pkt_create_cmd_bootmemr (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_BOOT_MEM_R;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -672,6 +717,7 @@ edio24_pkt_create_cmd_bootmemw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_BOOT_MEM_W;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -691,6 +737,9 @@ edio24_pkt_create_cmd_doutw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id,
 {
     static const int data_count_doutw = 6;
 
+    if (NULL == buffer) {
+        return -1;
+    }
     if (NULL == frame_id) {
         return -1;
     }
@@ -698,6 +747,7 @@ edio24_pkt_create_cmd_doutw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id,
         return -1;
     }
 
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]  = CMD_DOUT_W;
     buffer[MSG_INDEX_DATA]     =   mask        & 0xFF;
     buffer[MSG_INDEX_DATA + 1] =  (mask >>  8) & 0xFF;
@@ -736,6 +786,7 @@ edio24_pkt_create_cmd_dconfw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id
     if (ret < 0) {
         return ret;
     }
+    assert (NULL != buffer);
     buffer[MSG_INDEX_COMMAND]        = CMD_DCONF_W;
     buffer[ret - 1] = (unsigned char) 0xff - edio24_pkt_checksum(buffer, ret - 1);
     return ret;
@@ -744,6 +795,16 @@ edio24_pkt_create_cmd_dconfw (uint8_t *buffer, size_t sz_buf, uint8_t * frame_id
 int
 edio24_pkt_read_hdr_command (uint8_t *buffer, size_t sz_buf, uint8_t * value)
 {
+    if (NULL == buffer) {
+        return -1;
+    }
+    if (MSG_INDEX_COMMAND >= sz_buf) {
+        return -1;
+    }
+    if (NULL == value) {
+        return -1;
+    }
+    assert (NULL != buffer);
     *value = buffer[MSG_INDEX_COMMAND];
     return 0;
 }
@@ -768,6 +829,7 @@ edio24_pkt_read_hdr_count (uint8_t *buffer, size_t sz_buf, uint16_t * value)
         return -1;
     } else {
         uint16_t count = 0;
+        assert (NULL != buffer);
         count = (buffer[MSG_INDEX_COUNT_HIGH] & 0xFF) << 8;
         count += (buffer[MSG_INDEX_COUNT_LOW] & 0xFF);
         *value = count;
@@ -782,7 +844,7 @@ edio24_pkt_read_hdr_count (uint8_t *buffer, size_t sz_buf, uint16_t * value)
  * \param off_data: the offset from the start of data area
  * \param bytes: how many bytes for the value, little endian
  * \param value:    the content of value
- * \return <0 on fail, >0 the size of packet
+ * \return <0 on fail, =0 success
  */
 int
 edio24_pkt_read_value (uint8_t *buffer, size_t sz_buf, size_t off_data, size_t bytes, uint32_t * value)
@@ -792,13 +854,22 @@ edio24_pkt_read_value (uint8_t *buffer, size_t sz_buf, size_t off_data, size_t b
     int shift;
     int i;
 
+    if (bytes > sizeof(uint32_t)) {
+        fprintf(stderr, "edio24 required bytes > 4.\n");
+        return -1;
+    }
     if (0 != edio24_pkt_verify (buffer, sz_buf)) {
+        fprintf(stderr, "edio24 verify error.\n");
         return -1;
     }
     if (NULL == value) {
-        fprintf(stderr, "Parameter error: value.\n");
+        fprintf(stderr, "edio24 Parameter error: value.\n");
         return -1;
     }
+    if (MSG_INDEX_DATA + 1 + off_data + bytes > sz_buf) {
+        return -1;
+    }
+    assert (NULL != buffer);
     shift = 0;
     val = 0;
     for (i = 0; i < bytes; i ++) {
@@ -820,7 +891,7 @@ edio24_pkt_read_value (uint8_t *buffer, size_t sz_buf, size_t off_data, size_t b
  * \param sz_buf:   the byte size of the packet
  * \param frame_id: the pointer to the frame id record
  * \param value:    the content of value
- * \return <0 on fail, >0 the size of packet
+ * \return <0 on fail, =0 success
  */
 int
 edio24_pkt_read_ret_status (uint8_t *buffer, size_t sz_buf, uint32_t * value)
@@ -834,7 +905,7 @@ edio24_pkt_read_ret_status (uint8_t *buffer, size_t sz_buf, uint32_t * value)
  * \param sz_buf:   the byte size of the packet
  * \param frame_id: the pointer to the frame id record
  * \param value:    the content of value
- * \return <0 on fail, >0 the size of packet
+ * \return <0 on fail, =0 success
  */
 int
 edio24_pkt_read_ret_doutr (uint8_t *buffer, size_t sz_buf, uint32_t * value)
@@ -848,7 +919,7 @@ edio24_pkt_read_ret_doutr (uint8_t *buffer, size_t sz_buf, uint32_t * value)
  * \param sz_buf:   the byte size of the packet
  * \param frame_id: the pointer to the frame id record
  * \param value:    the content of value
- * \return <0 on fail, >0 the size of packet
+ * \return <0 on fail, =0 success
  */
 int
 edio24_pkt_read_ret_counterr (uint8_t *buffer, size_t sz_buf, uint32_t * value)
@@ -862,13 +933,20 @@ edio24_pkt_read_ret_counterr (uint8_t *buffer, size_t sz_buf, uint32_t * value)
  * \param sz_buf:   the byte size of the packet
  * \param frame_id: the pointer to the frame id record
  * \param network:  ip, mask, gw
- * \return <0 on fail, >0 the size of packet
+ * \return <0 on fail, =0 success
  */
 int
 edio24_pkt_read_ret_netconf (uint8_t *buffer, size_t sz_buf, struct in_addr network[3])
 {
-    edio24_pkt_read_value(buffer, sz_buf, 0, 4, (uint32_t *)network);
-    edio24_pkt_read_value(buffer, sz_buf, 4, 4, (uint32_t *)(network + 1));
+    if (NULL == buffer) {
+        return -1;
+    }
+    if (0 > edio24_pkt_read_value(buffer, sz_buf, 0, 4, (uint32_t *)network)) {
+        return -1;
+    }
+    if (0 > edio24_pkt_read_value(buffer, sz_buf, 4, 4, (uint32_t *)(network + 1))) {
+        return -1;
+    }
     return edio24_pkt_read_value(buffer, sz_buf, 8, 4, (uint32_t *)(network + 2));
 }
 
@@ -879,16 +957,21 @@ edio24_pkt_read_ret_netconf (uint8_t *buffer, size_t sz_buf, struct in_addr netw
  * \param frame_id: the pointer to the frame id record
  * \param count:    the byte size of the buffer_ret, it should be equal to the 'count' in the buffer in
  * \param buffer_ret: the buffer
- * \return <0 on fail, >0 the size of packet
+ * \return <0 on fail, =0 success
  */
 int
 edio24_pkt_read_ret_confmemr (uint8_t *buffer, size_t sz_buf, uint16_t count, uint8_t *buffer_ret)
 {
     // TODO
     uint16_t cnt;
-    edio24_pkt_read_hdr_count (buffer, sz_buf, &cnt);
+    if (0 > edio24_pkt_read_hdr_count (buffer, sz_buf, &cnt)) {
+        return -1;
+    }
     assert (count == cnt);
-    memmove (buffer_ret, &buffer[MSG_INDEX_DATA], count);
+    if (count > 0) {
+        assert (NULL != buffer);
+        memmove (buffer_ret, &buffer[MSG_INDEX_DATA], count);
+    }
     return 0;
 }
 
@@ -910,11 +993,53 @@ edio24_pkt_verify (uint8_t *buffer, size_t sz_buf)
         fprintf(stderr, "Verify error: buffer size and count.\n");
         return -1;
     }
+    assert (NULL != buffer);
     if (buffer[MSG_INDEX_DATA + count] + edio24_pkt_checksum(buffer, MSG_INDEX_DATA + count) != 0xff) {
         fprintf(stderr, "Verify error: checksum.\n");
         return -1;
     }
     return 0;
+}
+
+
+/**
+ * \brief create a respont packet
+ * \param buffer_out:   the buffer to be filled
+ * \param sz_out:   the byte size of the buffer
+ * \param cmd:    the command to be responded
+ * \param frame_id: the pointer to the frame id record
+ * \param status:  the return status
+ * \param data_count_respond:    the byte size of the return data, the sizeof buffer_data should be equal or larger than it
+ * \return <0 on fail, >0 the size of packet
+ */
+ssize_t
+edio24_pkt_create_respond (uint8_t * buffer_out, size_t sz_out, uint8_t cmd, uint8_t frame_id, uint8_t status, size_t data_count_respond, uint8_t * buffer_data)
+{
+    if (NULL == buffer_out) {
+        return -1;
+    }
+    if (sz_out < MSG_INDEX_DATA + 1 + data_count_respond) {
+        return -1;
+    }
+
+    assert (NULL != buffer_out);
+    if (data_count_respond > 0) {
+        if (NULL == buffer_data) {
+            return -1;
+        }
+        assert (NULL != buffer_data);
+        memmove (&buffer_out[MSG_INDEX_DATA], buffer_data, data_count_respond);
+    }
+    buffer_out[MSG_INDEX_START]          = MSG_START;
+    buffer_out[MSG_INDEX_COMMAND]        = cmd | MSG_REPLY;
+    buffer_out[MSG_INDEX_FRAME]          = frame_id;
+    buffer_out[MSG_INDEX_STATUS]         = status;
+    buffer_out[MSG_INDEX_COUNT_LOW]      = (unsigned char) ( data_count_respond       & 0xFF);
+    buffer_out[MSG_INDEX_COUNT_HIGH]     = (unsigned char) ((data_count_respond >> 8) & 0xFF);
+
+    buffer_out[MSG_INDEX_DATA + data_count_respond] = (unsigned char) 0xFF - edio24_pkt_checksum(buffer_out, MSG_INDEX_DATA + data_count_respond);
+
+    return (MSG_INDEX_DATA + 1 + data_count_respond);
 }
 
 #if defined(USE_EDIO24_SERVER) && (USE_EDIO24_SERVER == 1)
@@ -980,11 +1105,12 @@ int
 edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
 {
     uint32_t val;
-    assert (buffer_in);
-    if (sz_in < 64) {
+
+    if ((NULL == buffer_in) || (sz_in < 64)) {
         fprintf(stderr,"edio24_cli_verify_udp() error: size(%" PRIuSZ ") != 64\n", sz_in);
         return -1;
     }
+    assert (NULL != buffer_in);
     if ('D' != buffer_in[0]) {
         fprintf(stderr,"edio24_cli_verify_udp() error: header != 'D'\n");
         return -2;
@@ -1002,6 +1128,7 @@ edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
     fprintf(stderr,"  IPv4: %d.%d.%d.%d\n", buffer_in[35], buffer_in[36], buffer_in[37], buffer_in[38]);
     val = buffer_in[40]; val <<= 8; val += buffer_in[39];
     fprintf(stderr,"  Bootloader Version: 0x%04X\n", val);
+
     return 0;
 }
 
@@ -1159,6 +1286,7 @@ edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, 
     fprintf(stderr, "edio24 cli process block:\n");
     hex_dump_to_fd(STDERR_FILENO, buffer_in, MSG_INDEX_DATA + 1 + count);
 
+    assert (NULL != buffer_in);
     status = buffer_in[MSG_INDEX_STATUS];
     fprintf(stderr, "edio24 info: received %s status: %s(0x%02X)\n", edio24_val2cstr_cmd(cmd), edio24_val2cstr_status(status), status);
 
@@ -1323,6 +1451,8 @@ edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in,
         //return ret;
     }
 
+    assert (NULL != buffer_in);
+
     fprintf(stderr, "edio24 svr process block:\n");
     hex_dump_to_fd(STDERR_FILENO, buffer_in, MSG_INDEX_DATA + 1 + count);
 
@@ -1435,18 +1565,12 @@ edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in,
     assert (MSG_INDEX_DATA + 1 + len_data <= *sz_out);
     assert (NULL != buffer_out);
 
-    buffer_out[MSG_INDEX_START]          = MSG_START;
-    buffer_out[MSG_INDEX_COMMAND]        = cmd | MSG_REPLY;
-    buffer_out[MSG_INDEX_FRAME]          = buffer_in[MSG_INDEX_FRAME];
-    buffer_out[MSG_INDEX_STATUS]         = status;
-    buffer_out[MSG_INDEX_COUNT_LOW]      = (unsigned char) ( len_data       & 0xFF);
-    buffer_out[MSG_INDEX_COUNT_HIGH]     = (unsigned char) ((len_data >> 8) & 0xFF);
-
+    assert (MSG_INDEX_DATA + 1 + len_data <= *sz_out);
     // random value
     for (i = 0; i < len_data; i ++) {
         buffer_out[MSG_INDEX_DATA + i] = (1 + i) & 0xFF;
     }
-    buffer_out[MSG_INDEX_DATA + len_data] = (unsigned char) 0xFF - edio24_pkt_checksum(buffer_out, MSG_INDEX_DATA + len_data);
+    edio24_pkt_create_respond (buffer_out, sizeof(buffer_out), cmd, buffer_in[MSG_INDEX_FRAME], status, len_data, buffer_out);
 
     assert (NULL != sz_processed);
     assert (NULL != sz_out);
@@ -1462,29 +1586,520 @@ edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in,
 #include <ciut.h>
 
 TEST_CASE( .name="edio24-buffer", .description="test edio24 buffers.", .skip=0 ) {
-    uint8_t buffer[15];
+    uint8_t buffer[20];
     uint8_t frame_id = 0;
 
-    SECTION("test parameters") {
+    SECTION("test parameters for edio24_pkt_create_opendev") {
         //CIUT_LOG ("null buffer");
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, 0, NULL, 0, 0));
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 0, NULL, 0, 0));
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, sizeof(buffer), NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_opendev(NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_opendev(NULL, 5, 0));
+        REQUIRE(0 > edio24_pkt_create_opendev(buffer, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_opendev(buffer, 1, 0));
+        REQUIRE(0 > edio24_pkt_create_opendev(buffer, 3, 0));
+        REQUIRE(0 > edio24_pkt_create_opendev(buffer, 4, 0));
+        REQUIRE(sizeof(buffer) >= 5);
+        REQUIRE(5 == edio24_pkt_create_opendev(buffer, 5, 0));
+        REQUIRE(5 == edio24_pkt_create_opendev(buffer, 6, 0));
+    }
+    SECTION("test parameters for edio24_pkt_create_discoverydev") {
+        REQUIRE(0 > edio24_pkt_create_discoverydev(NULL, 0));
+        REQUIRE(0 > edio24_pkt_create_discoverydev(NULL, 1));
+        REQUIRE(0 > edio24_pkt_create_discoverydev(buffer, 0));
+        REQUIRE(sizeof(buffer) >= 1);
+        REQUIRE(1 == edio24_pkt_create_discoverydev(buffer, 1));
+        REQUIRE(1 == edio24_pkt_create_discoverydev(buffer, 10));
+    }
+    SECTION("test parameters for edio24_pkt_create_cmd_doutw") {
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 6);
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(NULL, 0, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(buffer, 0, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(NULL, MSG_INDEX_DATA + 1 + 6, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(NULL, 0, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(NULL, MSG_INDEX_DATA + 1 + 6, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(buffer, MSG_INDEX_DATA + 1 + 6, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(buffer, 0, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(buffer, 1, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_doutw(buffer, MSG_INDEX_DATA + 6, &frame_id, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 6 == edio24_pkt_create_cmd_doutw(buffer, MSG_INDEX_DATA + 1 + 6, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 6 == edio24_pkt_create_cmd_doutw(buffer, sizeof(buffer), &frame_id, 0, 0));
+        REQUIRE(2 == frame_id);
+    }
+    SECTION("test parameters for edio24_pkt_create_cmd_firmware") {
+        frame_id = 0;
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(NULL, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(buffer, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(NULL, MSG_INDEX_DATA + 1 + 2, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(NULL, 0, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(NULL, MSG_INDEX_DATA + 1 + 2, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(buffer, MSG_INDEX_DATA + 1 + 2, NULL));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(buffer, 0, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(buffer, 1, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_firmware(buffer, MSG_INDEX_DATA + 2, &frame_id));
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_firmware(buffer, MSG_INDEX_DATA + 1 + 2, &frame_id));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_firmware(buffer, sizeof(buffer), &frame_id));
+        REQUIRE(2 == frame_id);
+    }
+    SECTION("test parameters for edio24_pkt_create_cmd_blinkled") {
+        frame_id = 0;
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(NULL, 0, NULL, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(buffer, 0, NULL, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(NULL, MSG_INDEX_DATA + 1 + 1, NULL, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(NULL, 0, &frame_id, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(NULL, MSG_INDEX_DATA + 1 + 1, &frame_id, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(buffer, MSG_INDEX_DATA + 1 + 1, NULL, 0));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(buffer, 0, &frame_id, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(buffer, 1, &frame_id, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_blinkled(buffer, MSG_INDEX_DATA + 1, &frame_id, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 1 == edio24_pkt_create_cmd_blinkled(buffer, MSG_INDEX_DATA + 1 + 1, &frame_id, 0));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 1 == edio24_pkt_create_cmd_blinkled(buffer, sizeof(buffer), &frame_id, 0));
+        REQUIRE(2 == frame_id);
+    }
+}
 
-        assert (sizeof(buffer) >= 13);
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 0, &frame_id, 0, 0));
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 1, &frame_id, 0, 0));
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 2, &frame_id, 0, 0));
-        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 12, &frame_id, 0, 0));
-        REQUIRE(13 == edio24_pkt_create_cmd_dconfw(buffer, 13, &frame_id, 0, 0));
-        REQUIRE(13 == edio24_pkt_create_cmd_dconfw(buffer, 14, &frame_id, 0, 0));
+TEST_CASE( .name="edio24-read", .description="test edio24 buffers for edio24_pkt_read_hdr_xxx.", .skip=0 ) {
+    uint8_t buffer[20];
+    uint8_t frame_id = 0;
+    ssize_t ret;
+
+    SECTION("test parameters for edio24_pkt_read_hdr_command") {
+        uint8_t val8 = 0;
+        assert (1 == sizeof(val8));
+
+        assert (sizeof(buffer) > MSG_INDEX_COMMAND);
+        buffer[MSG_INDEX_COMMAND] = 0x73;
+        REQUIRE(0 > edio24_pkt_read_hdr_command (NULL, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_hdr_command (buffer, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_hdr_command (NULL, sizeof(buffer), NULL));
+        REQUIRE(0 > edio24_pkt_read_hdr_command (NULL, 0, &val8));
+        REQUIRE(0 > edio24_pkt_read_hdr_command (NULL, sizeof(buffer), &val8));
+        REQUIRE(0 > edio24_pkt_read_hdr_command (buffer, 0, &val8));
+        REQUIRE(0 > edio24_pkt_read_hdr_command (buffer, sizeof(buffer), NULL));
+        REQUIRE(0 == edio24_pkt_read_hdr_command (buffer, sizeof(buffer), &val8));
+        REQUIRE(0x73 == val8);
+    }
+    SECTION("test parameters for edio24_pkt_read_hdr_count") {
+        uint16_t val16 = 0;
+        assert (2 == sizeof(val16));
+
+        assert (sizeof(buffer) > MSG_INDEX_COUNT_HIGH);
+        assert (sizeof(buffer) > MSG_INDEX_COUNT_LOW);
+        buffer[MSG_INDEX_COUNT_HIGH] = 0x15;
+        buffer[MSG_INDEX_COUNT_LOW] = 0x73;
+        REQUIRE(0 > edio24_pkt_read_hdr_count (NULL, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_hdr_count (buffer, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_hdr_count (NULL, sizeof(buffer), NULL));
+        REQUIRE(0 > edio24_pkt_read_hdr_count (NULL, 0, &val16));
+        REQUIRE(0 > edio24_pkt_read_hdr_count (NULL, sizeof(buffer), &val16));
+        REQUIRE(0 > edio24_pkt_read_hdr_count (buffer, 0, &val16));
+        REQUIRE(0 > edio24_pkt_read_hdr_count (buffer, sizeof(buffer), NULL));
+        REQUIRE(0 == edio24_pkt_read_hdr_count (buffer, sizeof(buffer), &val16));
+        REQUIRE(0x1573 == val16);
+    }
+    SECTION("test parameters for edio24_pkt_read_value") {
+        uint32_t val32 = 0;
+        assert (4 == sizeof(val32));
 
         frame_id = 0;
-        REQUIRE(13 == edio24_pkt_create_cmd_dconfw(buffer, sizeof(buffer), &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_read_value (NULL, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_value (buffer, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_value (NULL, 0, sizeof(buffer), 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_value (NULL, 0, 0, &frame_id, NULL));
+        REQUIRE(0 > edio24_pkt_read_value (NULL, 0, 0, 0, &val32));
+        REQUIRE(0 > edio24_pkt_read_value (buffer, sizeof(buffer), 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_value (buffer, 0, 0, 0, &val32));
+        REQUIRE(0 > edio24_pkt_read_value (NULL, sizeof(buffer), 0, 0, &val32));
+        REQUIRE(0 > edio24_pkt_read_value (buffer, sizeof(buffer), 0, 0, &val32));
+        REQUIRE(0 > edio24_pkt_read_value (buffer, sizeof(buffer), 0, 1, NULL));
+        REQUIRE(0 == frame_id);
+        frame_id = 0;
+        ret = edio24_pkt_create_cmd_doutw(buffer, sizeof(buffer), &frame_id, 0x010203, 0x040506);
+        REQUIRE(1 == frame_id);
+        REQUIRE(0 == edio24_pkt_read_value (buffer, ret, 0, 1, &val32));
+        REQUIRE(0 == edio24_pkt_read_value (buffer, ret, 0, 2, &val32));
+        REQUIRE(0 == edio24_pkt_read_value (buffer, ret, 0, 3, &val32));
+        REQUIRE(0 == edio24_pkt_read_value (buffer, ret, 0, 4, &val32));
+
+        frame_id = 0;
+        ret = edio24_pkt_create_cmd_doutw(buffer, sizeof(buffer), &frame_id, 0x010203, 0x040506);
+        REQUIRE(1 == frame_id);
+        REQUIRE(0 < ret);
+        REQUIRE(0 == edio24_pkt_read_value(buffer, ret, 0, 3, &val32));
+        REQUIRE(0x010203 == val32);
+        REQUIRE(0 == edio24_pkt_read_value(buffer, ret, 3, 3, &val32));
+        REQUIRE(0x040506 == val32);
+
+        memset(buffer, 0, sizeof(buffer));
+        frame_id = 0;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DIN_R, frame_id, MSG_SUCCESS, 2, buffer);
+        REQUIRE(0 < ret);
+        REQUIRE(0 > edio24_pkt_read_ret_status (NULL,   0,   NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_status (buffer, 0,   NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_status (NULL,   ret, NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_status (NULL,   0,   &val32));
+        REQUIRE(0 > edio24_pkt_read_ret_status (buffer, ret, NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_status (buffer, 0,   &val32));
+        REQUIRE(0 > edio24_pkt_read_ret_status (NULL,   ret, &val32));
+        REQUIRE(0 == edio24_pkt_read_ret_status (buffer, ret, &val32));
+        REQUIRE(MSG_SUCCESS == val32);
+
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, 0,  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (buffer, 0,  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, sizeof(buffer),  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, 0,  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, 0,  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, 0,  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, 0,  0, 0, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_respond (NULL, 0,  0, 0, 0, 0, NULL));
+
+        frame_id = 0;
+        buffer[2] = 0x01;
+        buffer[1] = 0x02;
+        buffer[0] = 0x03;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 3, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 3 == ret);
+        REQUIRE(0 == edio24_pkt_read_ret_doutr (buffer, sizeof(buffer), &val32));
+        REQUIRE(0x010203 == val32);
+
+        frame_id = 0;
+        buffer[3] = 0x01;
+        buffer[2] = 0x02;
+        buffer[1] = 0x03;
+        buffer[0] = 0x04;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 4, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == ret);
+        REQUIRE(0 == edio24_pkt_read_ret_counterr (buffer, sizeof(buffer), &val32));
+        REQUIRE(0x01020304 == val32);
+    }
+    SECTION("test parameters for edio24_pkt_read_ret_netconf") {
+        //int edio24_pkt_read_ret_netconf (uint8_t *buffer, size_t sz_buf, struct in_addr network[3])
+        struct in_addr network[3];
+        int i;
+
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 12, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 12 == ret);
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (NULL, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (buffer, 0, NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (NULL, ret, NULL));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (NULL, 0, network));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (NULL, ret, network));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (buffer, 0, network));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (buffer, ret, NULL));
+
+        assert (sizeof(buffer) >= MSG_INDEX_DATA + 1 + sizeof(network));
+        frame_id = 0;
+        buffer[2] = 0x01;
+        buffer[1] = 0x02;
+        buffer[0] = 0x03;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 3, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 3 == ret);
+        REQUIRE(0 == edio24_pkt_verify(buffer, ret));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (buffer, ret, network));
+
+        frame_id = 0;
+        i = 0;
+        buffer[3] = 0x01;
+        buffer[2] = 0x02;
+        buffer[1] = 0x03;
+        buffer[0] = 0x04;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 4, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == ret);
+        REQUIRE(0 == edio24_pkt_verify(buffer, ret));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (buffer, ret, network));
+
+        frame_id = 0;
+        i = 0;
+        buffer[3] = 0x01;
+        buffer[2] = 0x02;
+        buffer[1] = 0x03;
+        buffer[0] = 0x04;
+        i += 4;
+        buffer[i + 3] = 0x05;
+        buffer[i + 2] = 0x06;
+        buffer[i + 1] = 0x07;
+        buffer[i + 0] = 0x08;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 8, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 8 == ret);
+        REQUIRE(0 == edio24_pkt_verify(buffer, ret));
+        REQUIRE(0 > edio24_pkt_read_ret_netconf (buffer, ret, network));
+
+        frame_id = 0;
+        i = 0;
+        buffer[3] = 0x01;
+        buffer[2] = 0x02;
+        buffer[1] = 0x03;
+        buffer[0] = 0x04;
+        i += 4;
+        buffer[i + 3] = 0x05;
+        buffer[i + 2] = 0x06;
+        buffer[i + 1] = 0x07;
+        buffer[i + 0] = 0x08;
+        i += 4;
+        buffer[i + 3] = 0x09;
+        buffer[i + 2] = 0x0a;
+        buffer[i + 1] = 0x0b;
+        buffer[i + 0] = 0x0c;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 12, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 12 == ret);
+        REQUIRE(0 == edio24_pkt_verify(buffer, ret));
+        REQUIRE(0 == edio24_pkt_read_ret_netconf (buffer, ret, network));
+    }
+    SECTION("test parameters for edio24_pkt_read_ret_confmemr") {
+
+        //int edio24_pkt_read_ret_confmemr (uint8_t *buffer, size_t sz_buf, uint16_t count, uint8_t *buffer_ret)
+        frame_id = 0;
+        buffer[2] = 0x01;
+        buffer[1] = 0x02;
+        buffer[0] = 0x03;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 3, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 3 == ret);
+        REQUIRE(0 == edio24_pkt_verify(buffer, ret));
+        REQUIRE(0 == edio24_pkt_read_ret_confmemr (buffer, ret, 3, buffer));
+        REQUIRE(buffer[2] == 0x01);
+        REQUIRE(buffer[1] == 0x02);
+        REQUIRE(buffer[0] == 0x03);
+
+        //int edio24_pkt_verify (uint8_t *buffer, size_t sz_buf)
+        frame_id = 0;
+        buffer[2] = 0x01;
+        buffer[1] = 0x02;
+        buffer[0] = 0x03;
+        ret = edio24_pkt_create_respond (buffer, sizeof(buffer), CMD_DOUT_R, frame_id, MSG_SUCCESS, 3, buffer);
+        REQUIRE(MSG_INDEX_DATA + 1 + 3 == ret);
+        REQUIRE(0 == edio24_pkt_verify(buffer, ret));
+        buffer[0] += 1;
+        REQUIRE(0 > edio24_pkt_verify(buffer, ret));
+    }
+    SECTION("test parameters for edio24_val2cstr_xxx") {
+        uint32_t val32 = 0;
+        assert (4 == sizeof(val32));
+
+        //edio24_val2cstr_cmd
+        REQUIRE(0 == strcmp("UNKNOWN_CMD", edio24_val2cstr_cmd(CMD_FIRMWARE + 1)));
+#define EDIO24_V2S(a) REQUIRE(0 == strcmp(#a, edio24_val2cstr_cmd(a)))
+        EDIO24_V2S(CMD_DIN_R);
+        EDIO24_V2S(CMD_DOUT_R);
+        EDIO24_V2S(CMD_DOUT_W);
+        EDIO24_V2S(CMD_DCONF_R);
+        EDIO24_V2S(CMD_DCONF_W);
+        EDIO24_V2S(CMD_COUNTER_R);
+        EDIO24_V2S(CMD_COUNTER_W);
+        EDIO24_V2S(CMD_CONF_MEM_R);
+        EDIO24_V2S(CMD_CONF_MEM_W);
+        EDIO24_V2S(CMD_USR_MEM_R);
+        EDIO24_V2S(CMD_USR_MEM_W);
+        EDIO24_V2S(CMD_SET_MEM_R);
+        EDIO24_V2S(CMD_SET_MEM_W);
+        EDIO24_V2S(CMD_BOOT_MEM_R);
+        EDIO24_V2S(CMD_BOOT_MEM_W);
+        EDIO24_V2S(CMD_BLINKLED);
+        EDIO24_V2S(CMD_RESET);
+        EDIO24_V2S(CMD_STATUS);
+        EDIO24_V2S(CMD_NETWORK_CONF);
+        EDIO24_V2S(CMD_FIRMWARE);
+#undef EDIO24_V2S
+
+        // edio24_val2cstr_status
+        REQUIRE(0 == strcmp("UNKNOWN_STATUS", edio24_val2cstr_status(MSG_ERROR_OTHER + 1)));
+#define EDIO24_V2S(a) REQUIRE(0 == strcmp(#a, edio24_val2cstr_status(a)))
+        EDIO24_V2S(MSG_SUCCESS);            // Command succeeded
+        EDIO24_V2S(MSG_ERROR_PROTOCOL);     // Command failed due to improper protocol (number of expected data bytes did not match protocol definition)
+        EDIO24_V2S(MSG_ERROR_PARAMETER);    // Command failed due to invalid parameters (the data contents were incorrect)
+        EDIO24_V2S(MSG_ERROR_BUSY);         // Command failed because resource was busy
+        EDIO24_V2S(MSG_ERROR_READY);        // Command failed because the resource was not ready
+        EDIO24_V2S(MSG_ERROR_TIMEOUT);      // Command failed due to a resource timeout
+        EDIO24_V2S(MSG_ERROR_OTHER);        // Command failed due to some other error
+#undef EDIO24_V2S
+    }
+    SECTION("test parameters for edio24_cli_verify_xxx") {
+        uint32_t val32 = 0;
+        assert (4 == sizeof(val32));
+
+        // int edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
+        // int edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, size_t * sz_needed_in)
+
+    }
+}
+
+TEST_CASE( .name="edio24-buffer2", .description="test edio24 buffers for edio24_pkt_create_cmd_dinr.", .skip=0 ) {
+    uint8_t buffer[20];
+    uint8_t frame_id = 0;
+
+    SECTION("test parameters for edio24_pkt_create_cmd_dinr") {
+        frame_id = 0;
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(NULL, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(buffer, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(NULL, MSG_INDEX_DATA + 1, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(NULL, 0, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(NULL, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(buffer, MSG_INDEX_DATA + 1, NULL));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(buffer, 0, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(buffer, 1, &frame_id));
+        REQUIRE(0 > edio24_pkt_create_cmd_dinr(buffer, MSG_INDEX_DATA, &frame_id));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_dinr(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_dinr(buffer, sizeof(buffer), &frame_id));
+        REQUIRE(2 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 6);
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, 0, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 6 == edio24_pkt_create_cmd_dconfw(buffer, MSG_INDEX_DATA + 1 + 6, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 6);
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, 0, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 0, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, MSG_INDEX_DATA + 1 + 6, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, 0, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(NULL, MSG_INDEX_DATA + 1 + 6, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, MSG_INDEX_DATA + 1 + 6, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 0, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, 1, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfw(buffer, MSG_INDEX_DATA + 6, &frame_id, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 6 == edio24_pkt_create_cmd_dconfw(buffer, MSG_INDEX_DATA + 1 + 6, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 6 == edio24_pkt_create_cmd_dconfw(buffer, sizeof(buffer), &frame_id, 0, 0));
+        REQUIRE(2 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_doutr(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_doutr(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_dconfr(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_dconfr(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_dcounterr(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_dcounterr(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_dcounterw(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_dcounterw(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_reset(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_reset(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_status(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_status(buffer, MSG_INDEX_DATA + 1, &frame_id));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_netconf(NULL, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 == edio24_pkt_create_cmd_netconf(buffer, MSG_INDEX_DATA + 1, &frame_id));
         REQUIRE(1 == frame_id);
     }
+}
 
-    //CIUT_DBL_EQUAL(0.1 + 0.2, 0.3);
+TEST_CASE( .name="edio24-buffer3", .description="test edio24 buffers for edio24_pkt_create_cmd_confmemr.", .skip=0 ) {
+    uint8_t buffer[20];
+    uint8_t frame_id = 0;
+
+    SECTION("test parameters for edio24_pkt_create_cmd_confmemr") {
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 4);
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(NULL, 0, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(buffer, 0, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(NULL, MSG_INDEX_DATA + 1 + 4, NULL, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(NULL, 0, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(NULL, MSG_INDEX_DATA + 1 + 4, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(buffer, MSG_INDEX_DATA + 1 + 4, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(buffer, 0, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(buffer, 1, &frame_id, 0, 0));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemr(buffer, MSG_INDEX_DATA + 4, &frame_id, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == edio24_pkt_create_cmd_confmemr(buffer, MSG_INDEX_DATA + 1 + 4, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == edio24_pkt_create_cmd_confmemr(buffer, sizeof(buffer), &frame_id, 0, 0));
+        REQUIRE(2 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 4);
+        REQUIRE(0 > edio24_pkt_create_cmd_usermemr(NULL, 0, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == edio24_pkt_create_cmd_usermemr(buffer, MSG_INDEX_DATA + 1 + 4, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 4);
+        REQUIRE(0 > edio24_pkt_create_cmd_setmemr(NULL, 0, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == edio24_pkt_create_cmd_setmemr(buffer, MSG_INDEX_DATA + 1 + 4, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 4);
+        REQUIRE(0 > edio24_pkt_create_cmd_bootmemr(NULL, 0, NULL, 0, 0));
+        REQUIRE(MSG_INDEX_DATA + 1 + 4 == edio24_pkt_create_cmd_bootmemr(buffer, MSG_INDEX_DATA + 1 + 4, &frame_id, 0, 0));
+        REQUIRE(1 == frame_id);
+    }
+}
+
+TEST_CASE( .name="edio24-buffer4", .description="test edio24 buffers for edio24_pkt_create_cmd_confmemw.", .skip=0 ) {
+    uint8_t buffer[20];
+    uint8_t frame_id = 0;
+
+    SECTION("test parameters for edio24_pkt_create_cmd_confmemw") {
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 2);
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(NULL, 0, NULL, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(buffer, 0, NULL, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(NULL, MSG_INDEX_DATA + 1 + 2, NULL, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(NULL, 0, &frame_id, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(NULL, MSG_INDEX_DATA + 1 + 2, &frame_id, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(buffer, MSG_INDEX_DATA + 1 + 2, NULL, 0, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA > 1);
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(buffer, 0, &frame_id, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(buffer, 1, &frame_id, 0, 0, NULL));
+        REQUIRE(0 > edio24_pkt_create_cmd_confmemw(buffer, MSG_INDEX_DATA + 2, &frame_id, 0, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_confmemw(buffer, MSG_INDEX_DATA + 1 + 2, &frame_id, 0, 0, NULL));
+        REQUIRE(1 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_confmemw(buffer, sizeof(buffer), &frame_id, 0, 0, NULL));
+        REQUIRE(2 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 + 1 == edio24_pkt_create_cmd_confmemw(buffer, sizeof(buffer), &frame_id, 0, 1, buffer));
+        REQUIRE(3 == frame_id);
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 + 2 == edio24_pkt_create_cmd_confmemw(buffer, sizeof(buffer), &frame_id, 0, 2, buffer));
+        REQUIRE(4 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 2);
+        REQUIRE(0 > edio24_pkt_create_cmd_usermemw(NULL, 0, NULL, 0, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_usermemw(buffer, MSG_INDEX_DATA + 1 + 2, &frame_id, 0, 0, NULL));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 2);
+        REQUIRE(0 > edio24_pkt_create_cmd_setmemw(NULL, 0, NULL, 0, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_setmemw(buffer, MSG_INDEX_DATA + 1 + 2, &frame_id, 0, 0, NULL));
+        REQUIRE(1 == frame_id);
+
+        frame_id = 0;
+        REQUIRE(sizeof(buffer) >= MSG_INDEX_DATA + 1 + 2);
+        REQUIRE(0 > edio24_pkt_create_cmd_bootmemw(NULL, 0, NULL, 0, 0, NULL));
+        REQUIRE(MSG_INDEX_DATA + 1 + 2 == edio24_pkt_create_cmd_bootmemw(buffer, MSG_INDEX_DATA + 1 + 2, &frame_id, 0, 0, NULL));
+        REQUIRE(1 == frame_id);
+    }
 }
 
 TEST_CASE( .name="edio24-svr-process", .description="test edio24_svr_process_xxx.", .skip=0 ) {
