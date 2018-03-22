@@ -352,7 +352,7 @@ create_test_file(const char * fn_test)
 }
 
 TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
-#define FN_TEST "/tmp/tmp-test.txt"
+#define FN_TEST "tmp-test.txt"
 
     //REQUIRE(0 > create_test_file("/dev/zero"));
 
@@ -361,7 +361,7 @@ TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
 
 
     SECTION("test read file parameters") {
-#if ! defined(_WIN32)
+#if ! defined(_WIN32) // and ! MINGW
         FILE * fp_old = stdin;
         FILE * fp;
         int ret;
@@ -385,7 +385,7 @@ TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
         }
 #endif // _WIN32
 
-#define FN_TEST2 "/tmp/tmp-noexist.txt"
+#define FN_TEST2 "tmp-noexist.txt"
         unlink(FN_TEST2);
         REQUIRE(0 > read_file_lines(FN_TEST2, NULL, NULL));
 

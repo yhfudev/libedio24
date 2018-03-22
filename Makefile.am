@@ -55,14 +55,14 @@ ChangeLog: .git
 
 if COVERAGE
 
-COV_ARG_g=
 COV_ARG_gcc=
-COV_ARG_clang=--gcov-tool $(abs_top_builddir)/gcov-tool-clang
+COV_ARG_g++=
+COV_ARG_clang=--gcov-tool $(abs_top_srcdir)/gcov-tool-clang
 COV_DEPEND_gcc=
-COV_DEPEND_g=
-COV_DEPEND_clang=$(abs_top_builddir)/gcov-tool-clang
+COV_DEPEND_g++=
+COV_DEPEND_clang=$(abs_top_srcdir)/gcov-tool-clang
 
-$(abs_top_builddir)/gcov-tool-clang:
+$(abs_top_srcdir)/gcov-tool-clang:
 	@echo "#!/bin/bash" > $@
 	@echo "exec llvm-cov gcov \"\$$@\"" >> $@
 	@chmod 755 $@
