@@ -126,23 +126,22 @@ if test "x$enable_coverage" = "xyes"; then
     COVERAGE_CFLAGS=
     COVERAGE_LDFLAGS=
 
-    AS_CASE([${CC}], [*clang*],
-      [AX_CHECK_COMPILE_FLAG([-fprofile-instr-generate],
-      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-instr-generate"])])
-    AS_CASE([${CC}], [*clang*],
-      [AX_CHECK_COMPILE_FLAG([-fcoverage-mapping],
-      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fcoverage-mapping"])])
-    AS_CASE([${CC}], [*clang*],
-      [AX_CHECK_COMPILE_FLAG([--coverage],
-      [COVERAGE_CFLAGS="$COVERAGE_CFLAGS --coverage"])])
+    # llvm native coverage mode:
+    #AS_CASE([${CC}], [*clang*],
+    #  [AX_CHECK_COMPILE_FLAG([-fprofile-instr-generate],
+    #  [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-instr-generate"])])
+    #AS_CASE([${CC}], [*clang*],
+    #  [AX_CHECK_COMPILE_FLAG([-fcoverage-mapping],
+    #  [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fcoverage-mapping"])])
 
-    AS_CASE([${CC}], [*gcc*],
+    # gcov or llvm compabililty coverage mode:
+    AS_CASE([${CC}], [*],
       [AX_CHECK_COMPILE_FLAG([-fprofile-arcs],
       [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -fprofile-arcs"])])
-    AS_CASE([${CC}], [*gcc*],
+    AS_CASE([${CC}], [*],
       [AX_CHECK_COMPILE_FLAG([-ftest-coverage],
       [COVERAGE_CFLAGS="$COVERAGE_CFLAGS -ftest-coverage"])])
-    AS_CASE([${CC}], [*gcc*],
+    AS_CASE([${CC}], [*],
       [AX_CHECK_COMPILE_FLAG([--coverage],
       [COVERAGE_CFLAGS="$COVERAGE_CFLAGS --coverage"])])
 
@@ -150,14 +149,11 @@ if test "x$enable_coverage" = "xyes"; then
       [AX_CHECK_LINK_FLAG([-fprofile-arcs],
       [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fprofile-arcs"])])
     AS_CASE([${CC}], [*],
+      [AX_CHECK_LINK_FLAG([-ftest-coverage],
+      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -ftest-coverage"])])
+    AS_CASE([${CC}], [*],
       [AX_CHECK_LINK_FLAG([--coverage],
       [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS --coverage"])])
-    AS_CASE([${CC}], [*],
-      [AX_CHECK_LINK_FLAG([-fprofile-instr-generate],
-      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fprofile-instr-generate"])])
-    AS_CASE([${CC}], [*],
-      [AX_CHECK_LINK_FLAG([-fcoverage-mapping],
-      [COVERAGE_LDFLAGS="$COVERAGE_LDFLAGS -fcoverage-mapping"])])
 
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)

@@ -55,13 +55,14 @@ ChangeLog: .git
 
 if COVERAGE
 
+COV_ARG_g=
 COV_ARG_gcc=
-COV_ARG_clang=--gcov-tool $(abs_top_builddir)/gcov-tool-$(CC)
+COV_ARG_clang=--gcov-tool $(abs_top_builddir)/gcov-tool-clang
 COV_DEPEND_gcc=
-COV_DEPEND_clang=$(abs_top_builddir)/gcov-tool-$(CC)
+COV_DEPEND_g=
+COV_DEPEND_clang=$(abs_top_builddir)/gcov-tool-clang
 
 $(abs_top_builddir)/gcov-tool-clang:
-	@echo "CC=$(CC)"
 	@echo "#!/bin/bash" > $@
 	@echo "exec llvm-cov gcov \"\$$@\"" >> $@
 	@chmod 755 $@
@@ -73,11 +74,11 @@ cov-reset-common:
 cov-reset: cov-reset-common
 	@lcov --zerocounters --directory $(top_builddir)
 
-cov-report: $(COV_DEPEND_$(CC))
+cov-report: $(COV_DEPEND_$(shell echo $(CC) |  sed 's/[\._0-9-]*//g'))
 	@mkdir $(top_builddir)/coverage
 	@echo "PWD=`pwd`"
 	lcov -c -o $(top_builddir)/coverage/coverage.info -d $(top_builddir) \
-		 --rc lcov_branch_coverage=1 $(COV_ARG_$(CC))
+		 --rc lcov_branch_coverage=1 $(COV_ARG_$(shell echo $(CC) |  sed 's/[\._0-9-]*//g'))
 	lcov -r $(top_builddir)/coverage/coverage.info '*/tests/*' '*/suites/*' '/usr*' \
 		 -o $(abs_top_builddir)/coverage/coverage.cleaned.info \
 		 --rc lcov_branch_coverage=1
@@ -94,7 +95,7 @@ coverage:
 	@$(MAKE) cov-report
 
 clean-local-coverage: cov-reset-common
-#	@rm -f $(abs_top_builddir)/gcov-tool-$(CC)
+#	@rm -f $(abs_top_builddir)/gcov-tool-clang
 
 else
 clean-local-coverage:
