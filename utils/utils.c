@@ -361,6 +361,7 @@ TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
 
 
     SECTION("test read file parameters") {
+#if ! defined(_WIN32)
         FILE * fp_old = stdin;
         FILE * fp;
         int ret;
@@ -382,6 +383,8 @@ TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
             stdin = fp_old;
             REQUIRE(0 == ret);
         }
+#endif // _WIN32
+
 #define FN_TEST2 "/tmp/tmp-noexist.txt"
         unlink(FN_TEST2);
         REQUIRE(0 > read_file_lines(FN_TEST2, NULL, NULL));
