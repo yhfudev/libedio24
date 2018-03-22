@@ -94,7 +94,7 @@ coverage:
 	@$(MAKE) cov-report
 
 clean-local-coverage: cov-reset-common
-	@rm -f $(abs_top_builddir)/gcov-tool-$(CC)
+#	@rm -f $(abs_top_builddir)/gcov-tool-$(CC)
 
 else
 clean-local-coverage:
