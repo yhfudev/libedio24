@@ -4,9 +4,11 @@ libedio24
 A network library to control E-DIO24 devices.
 
 
-License | Travis | Appveyor | Coverity
-------- | ------ | -------- | --------
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/yhfudev/libedio24/blob/master/COPYING) | [![Travis Build status](https://travis-ci.org/yhfudev/libedio24.svg?branch=master)](https://travis-ci.org/yhfudev/libedio24) | [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/afefa9w0h06uv2ee/branch/master?svg=true)](https://ci.appveyor.com/project/yhfudev/libedio24/branch/master) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/12089/badge.svg)](https://scan.coverity.com/projects/yhfudev-libedio24)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/yhfudev/libedio24/blob/master/COPYING)
+[![Travis Build status](https://travis-ci.org/yhfudev/libedio24.svg?branch=master)](https://travis-ci.org/yhfudev/libedio24)
+[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/afefa9w0h06uv2ee/branch/master?svg=true)](https://ci.appveyor.com/project/yhfudev/libedio24/branch/master)
+[![codecov](https://codecov.io/gh/yhfudev/libedio24/branch/master/graph/badge.svg)](https://codecov.io/gh/yhfudev/libedio24)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/15281/badge.svg)](https://scan.coverity.com/projects/yhfudev-libedio24)
 
 
 This library provides the creating of various control packets for E-DIO24 devices.
