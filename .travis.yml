@@ -208,10 +208,10 @@ script:
   - make -j 8 CC=${CC} CXX=${CXX}
   - sudo make install CC=${CC} CXX=${CXX}
   - make check CC=${CC} CXX=${CXX}
-  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then  make clean; make coverage CC=${CC} CXX=${CXX} ; fi
+  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then make clean; make coverage CC=${CC} CXX=${CXX} ; fi
   - utils/ciutexc -
 
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then bash <(curl -s https://codecov.io/bash) ; fi
 
