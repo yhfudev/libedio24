@@ -35,7 +35,7 @@ autoreconf -f -i -Wall,no-obsolete
 
 #./configure --enable-debug
 if [ 1 = 1 ]; then
-  #./configure --disable-shared --enable-static --enable-coverage
+  #./configure --disable-shared --enable-static --enable-coverage --enable-valgrind
   ./configure --disable-shared --enable-static
 
 else
@@ -48,9 +48,9 @@ else
   cd cpp-ci-unit-test && git pull && cd ..
   cd libuv && git pull && ./autogen.sh && ./configure && make clean && make -j8 && cd ..
 
-  CC=clang
-  CXX=clang++
-  CC=$CC CXX=$CXX ./configure --disable-shared --enable-static --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
+  #CC=clang
+  #CXX=clang++
+  CC=$CC CXX=$CXX ./configure --disable-shared --enable-static --enable-valgrind --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
   make clean; make coverage CC=$CC CXX=$CXX
 fi
 

@@ -5,7 +5,7 @@ AC_PREREQ([2.60])
 AC_INIT(libedio24, 0.1.0, yhfudev@gmail.com)
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE(-Wall subdir-objects)
+AM_INIT_AUTOMAKE(-Wall subdir-objects parallel-tests color-tests)
 
 # Specify the directory of additional local Autoconf macros.
 AC_CONFIG_MACRO_DIR([m4])
@@ -99,6 +99,20 @@ fi
 if test "x$LIBUV_LIB_DIR" != "x" ; then
    LDFLAGS="-L${LIBUV_LIB_DIR} ${LDFLAGS}"
 fi
+
+
+AX_VALGRIND_DFLT([sgcheck], [off])
+AX_VALGRIND_CHECK
+#AC_ARG_ENABLE([valgrind],
+#  [AS_HELP_STRING([--enable-valgrind],
+#    [use valgrind to test the test suite])],
+#    [],
+#    [enable_valgrind=no])
+#AS_IF([test "$enable_valgrind" = yes],
+#  [AC_PATH_PROG([VALGRIND], [valgrind])]
+#  AS_IF([test -z "$VALGRIND"], [AC_MSG_ERROR([valgrind not found])])
+#)
+#AM_CONDITIONAL([USE_VALGRIND],[test '!' "$enable_valgrind" = no])
 
 
 # debug

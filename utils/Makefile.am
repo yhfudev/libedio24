@@ -1,4 +1,6 @@
 
+EXTRA_DIST=
+
 AM_LDFLAGS=
 AM_CFLAGS=
 
@@ -66,8 +68,26 @@ DEFS+=$(EXT_FLAGS)
 #noinst_PROGRAMS=ciutexc
 TESTS=ciutexc
 check_PROGRAMS=ciutexc
-
 bin_PROGRAMS=edio24cli edio24sim gencctcmd
+
+# add "VALGRIND = valgrind --gen-suppressions=all" in your makefile to get the content of .supp
+# default valgrind supp file: /usr/lib/valgrind/default.supp
+@VALGRIND_CHECK_RULES@
+VALGRIND_SUPPRESSIONS_FILES = libedio24-valgrind-test.supp
+EXTRA_DIST += libedio24-valgrind-test.supp
+
+#if USE_VALGRIND
+#TESTS_ENVIRONMENT=$(VALGRIND) --quiet --trace-children=yes --error-exitcode=1 --dsymutil=yes --leak-check=yes 
+#endif
+
+#check-valgrind: check $(TESTS)
+#	@which valgrind >/dev/null || (echo "Running the valgrind target without having valgrind. Perhaps install it first?"; exit 1;)
+#	@for test in $$(echo $(TESTS) | sed 's/uitls\//utils\/.libs\//g') ; do \
+#	valgrind --dsymutil=yes --suppressions=$(srcdir)/valgrind.suppressions --gen-suppressions=all --error-exitcode=1 ./$${test} ; \
+#        done
+#        CK_FORK=no LD_LIBRARY_PATH=$(abs_top_builddir)/.libs valgrind --error-exitcode=1 --leak-resolution=low --quiet \
+#            --leak-check=full --show-possibly-lost=no --suppressions=tests/valgrind.suppressions $${test} ;
+
 
 gencctcmd_SOURCES= \
     gencctcmd.c \
@@ -89,7 +109,7 @@ edio24sim_SOURCES= \
     edio24sim.c \
     $(NULL)
 
-EXTRA_DIST= \
+EXTRA_DIST += \
     utils.h \
     ciut-sio.h \
     $(NULL)
@@ -123,4 +143,6 @@ edio24sim_LDFLAGS = $(AM_LDFLAGS)
 ciutexc_LDADD = -luv
 ciutexc_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
 ciutexc_LDFLAGS = $(AM_LDFLAGS)
+
+
 

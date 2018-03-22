@@ -15,7 +15,6 @@ before_install:
   #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew doctor          ; fi
   - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then curl -sSL https://rvm.io/mpapis.asc | gpg --import - && rvm get head ; fi
   - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt ; fi
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install graphviz; fi
   #- sudo apt-get install libuv1
   # Install lcov 1.11
   - wget http://downloads.sourceforge.net/ltp/lcov-1.13.tar.gz
@@ -48,6 +47,7 @@ addons:
     packages:
     - gcc
     - g++
+    - valgrind
 
 sudo: required
 language: c
@@ -69,6 +69,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
+            - valgrind
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
@@ -80,6 +81,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
+            - valgrind
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
 
@@ -91,6 +93,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
+            - valgrind
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
 
@@ -102,6 +105,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
+            - valgrind
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 
@@ -115,6 +119,7 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             - clang-3.6
+            - valgrind
       env:
         - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
 
@@ -127,6 +132,7 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
+            - valgrind
       env:
         - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
 
@@ -139,6 +145,7 @@ matrix:
             - llvm-toolchain-precise-3.8
           packages:
             - clang-3.8
+            - valgrind
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
@@ -151,6 +158,7 @@ matrix:
 #            - llvm-toolchain-trusty-3.9
 #          packages:
 #            - clang-3.9
+#            - valgrind
 #      env:
 #        - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
 
@@ -162,6 +170,7 @@ matrix:
             - llvm-toolchain-trusty-4.0
           packages:
             - clang-4.0
+            - valgrind
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
 
@@ -173,6 +182,7 @@ matrix:
             - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
+            - valgrind
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 
@@ -205,13 +215,13 @@ script:
   - g++ --version
   - echo "CC=$CC; CXX=$CXX"
   - ./autogen.sh
-  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then CC=${CC} CXX=${CXX} ./configure --enable-static --disable-shared --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} ; else CC=${CC} CXX=${CXX} ./configure --enable-static --disable-shared --disable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} ; fi
+  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then CC=${CC} CXX=${CXX} ./configure --enable-static --disable-shared --enable-coverage --enable-valgrind --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} ; else CC=${CC} CXX=${CXX} ./configure --enable-static --disable-shared --disable-coverage --disable-valgrind --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I${TRAVIS_BUILD_DIR} ; fi
   - make -j 8 CC=${CC} CXX=${CXX}
   - sudo make install CC=${CC} CXX=${CXX}
-  - make check CC=${CC} CXX=${CXX}
+  - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then make clean; make check-valgrind CC=${CC} CXX=${CXX} ; fi
   - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then make clean; make coverage CC=${CC} CXX=${CXX} ; fi
+  - make clean && make check CC=${CC} CXX=${CXX}
   - utils/ciutexc -
-
 
 after_success:
   - if [[ ! "$TRAVIS_OS_NAME" == "osx" ]]; then bash <(curl -s https://codecov.io/bash) ; fi
