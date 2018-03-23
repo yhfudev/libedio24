@@ -859,7 +859,7 @@ edio24_pkt_read_value (uint8_t *buffer, size_t sz_buf, size_t off_data, size_t b
         return -1;
     }
     if (0 != edio24_pkt_verify (buffer, sz_buf)) {
-        fprintf(stderr, "edio24 verify error.\n");
+        //fprintf(stderr, "edio24 verify error.\n");
         return -1;
     }
     if (NULL == value) {
@@ -1107,27 +1107,27 @@ edio24_cli_verify_udp(uint8_t * buffer_in, size_t sz_in)
     uint32_t val;
 
     if ((NULL == buffer_in) || (sz_in < 64)) {
-        fprintf(stderr,"edio24_cli_verify_udp() error: size(%" PRIuSZ ") != 64\n", sz_in);
+        //fprintf(stderr,"edio24_cli_verify_udp() error: size(%" PRIuSZ ") != 64\n", sz_in);
         return -1;
     }
     assert (NULL != buffer_in);
     if ('D' != buffer_in[0]) {
-        fprintf(stderr,"edio24_cli_verify_udp() error: header != 'D'\n");
+        //fprintf(stderr,"edio24_cli_verify_udp() error: header != 'D'\n");
         return -2;
     }
-    fprintf(stderr,"  MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", buffer_in[1], buffer_in[2], buffer_in[3], buffer_in[4], buffer_in[5], buffer_in[6]);
+    fprintf(stdout,"  MAC: %02X:%02X:%02X:%02X:%02X:%02X\n", buffer_in[1], buffer_in[2], buffer_in[3], buffer_in[4], buffer_in[5], buffer_in[6]);
     val = buffer_in[8]; val <<= 8; val += buffer_in[7];
-    fprintf(stderr,"  Product ID: 0x%04X\n", val);
+    fprintf(stdout,"  Product ID: 0x%04X\n", val);
     val = buffer_in[10]; val <<= 8; val += buffer_in[9];
-    fprintf(stderr,"  Firmware Version: 0x%04X\n", val);
-    fprintf(stderr,"  NetBIOS Name: %s\n", &buffer_in[11]);
+    fprintf(stdout,"  Firmware Version: 0x%04X\n", val);
+    fprintf(stdout,"  NetBIOS Name: %s\n", &buffer_in[11]);
     val = buffer_in[28]; val <<= 8; val += buffer_in[27];
-    fprintf(stderr,"  Command Port: 0x%04X (%d)\n", val, val);
+    fprintf(stdout,"  Command Port: 0x%04X (%d)\n", val, val);
     val = buffer_in[34]; val <<= 8; val += buffer_in[33];
-    fprintf(stderr,"  Status: 0x%04X\n", val);
-    fprintf(stderr,"  IPv4: %d.%d.%d.%d\n", buffer_in[35], buffer_in[36], buffer_in[37], buffer_in[38]);
+    fprintf(stdout,"  Status: 0x%04X\n", val);
+    fprintf(stdout,"  IPv4: %d.%d.%d.%d\n", buffer_in[35], buffer_in[36], buffer_in[37], buffer_in[38]);
     val = buffer_in[40]; val <<= 8; val += buffer_in[39];
-    fprintf(stderr,"  Bootloader Version: 0x%04X\n", val);
+    fprintf(stdout,"  Bootloader Version: 0x%04X\n", val);
 
     return 0;
 }
@@ -1281,7 +1281,7 @@ edio24_cli_verify_tcp(uint8_t * buffer_in, size_t sz_in, size_t * sz_processed, 
     }
 
     if (0 != edio24_pkt_verify(buffer_in, sz_in)) {
-        fprintf(stderr, "edio24 error in verify the received packet, cmd=%s(0x%02X).\n", edio24_val2cstr_cmd(cmd), cmd);
+        //fprintf(stderr, "edio24 error in verify the received packet, cmd=%s(0x%02X).\n", edio24_val2cstr_cmd(cmd), cmd);
         return 2;
     }
     fprintf(stderr, "edio24 cli process block:\n");
