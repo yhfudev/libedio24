@@ -51,7 +51,7 @@ else
   which "$CC" || CC=gcc
   which "$CXX" || if [[ "$CC" =~ .*clang.* ]]; then CXX=clang++; else CXX=g++; fi
   CC=$CC CXX=$CXX ./configure --disable-shared --enable-static --enable-valgrind --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
-  make clean; make coverage CC=$CC CXX=$CXX; make check-valgrind CC=$CC CXX=$CXX
+  make clean; make; make coverage CC=$CC CXX=$CXX; make check CC=$CC CXX=$CXX; make check-valgrind CC=$CC CXX=$CXX
 fi
 
 #make clean

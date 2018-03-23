@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.60])
-AC_INIT(libedio24, 1.0.0, yhfudev@gmail.com)
+AC_INIT(libedio24, 1.0.1, yhfudev@gmail.com)
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE(-Wall subdir-objects parallel-tests color-tests)
@@ -25,7 +25,6 @@ AC_PROG_LEX
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 
 AC_LANG([C])
 AC_LANG([C++])
@@ -73,7 +72,7 @@ AC_ARG_WITH(ciut-include,
             [AS_HELP_STRING([--with-ciut-include],[Directory to look for ciut headers])],
             [CIUT_INC_DIR="${withval}"],)
 if test "x$CIUT_INC_DIR" != "x" ; then
-   CPPFLAGS="-I${CIUT_INC_DIR} ${CPPFLAGS}"
+   CFLAGS="-I${CIUT_INC_DIR} ${CFLAGS}"
 fi
 if test "x$CIUT_LIB_DIR" != "x" ; then
    LDFLAGS="-L${CIUT_LIB_DIR} ${LDFLAGS}"
@@ -94,10 +93,17 @@ AC_ARG_WITH(libuv-include,
             [AS_HELP_STRING([--with-libuv-include],[Directory to look for libuv headers])],
             [LIBUV_INC_DIR="${withval}"],)
 if test "x$LIBUV_INC_DIR" != "x" ; then
-   CPPFLAGS="-I${LIBUV_INC_DIR} ${CPPFLAGS}"
+   CFLAGS="-I${LIBUV_INC_DIR} ${CFLAGS}"
+else
+  #CFLAGS="-std=iso9899:1990 ${CFLAGS}"
+  #AC_LANG_PUSH([C++])
+  AC_CHECK_HEADERS([uv.h], [ LIBUVH='yes' ], AC_MSG_ERROR([Couldn't find libuv header ]), [])
+  #AC_LANG_POP
 fi
 if test "x$LIBUV_LIB_DIR" != "x" ; then
    LDFLAGS="-L${LIBUV_LIB_DIR} ${LDFLAGS}"
+else
+  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [])
 fi
 
 
@@ -172,7 +178,7 @@ if test "x$enable_coverage" = "xyes"; then
     AC_SUBST(COVERAGE_CFLAGS)
     AC_SUBST(COVERAGE_LDFLAGS)
 
-    CPPFLAGS="${COVERAGE_CFLAGS} ${CPPFLAGS}"
+    CFLAGS="${COVERAGE_CFLAGS} ${CFLAGS}"
     LDFLAGS="${COVERAGE_LDFLAGS} ${LDFLAGS}"
 
     AC_MSG_NOTICE([coverage enabled, adding "-g -O0" to CFLAGS])
@@ -182,7 +188,7 @@ if test "x$enable_coverage" = "xyes"; then
 fi
 AM_CONDITIONAL([COVERAGE], [test x$enable_coverage = xyes])
 
-if test "x$enable_debug" = "xyes"  || "x$enable_coverage" = "xyes" ; then
+if test "x$enable_debug" = "xyes"  || test "x$enable_coverage" = "xyes" ; then
   changequote({,})
   CFLAGS=`echo "$CFLAGS" | $SED -e 's/-O[0-9s]*//g'`
   CXXFLAGS=`echo "$CXXFLAGS" | $SED -e 's/-O[0-9s]*//g'`
