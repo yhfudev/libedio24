@@ -359,7 +359,6 @@ TEST_CASE( .name="read-file-lines", .description="test utils.", .skip=0 ) {
     CIUT_LOG("Create a new file: '%s'", FN_TEST);
     REQUIRE(0 == create_test_file(FN_TEST));
 
-
     SECTION("test read file parameters") {
 #if ! defined(_WIN32) // and ! MINGW
         FILE * fp_old = stdin;

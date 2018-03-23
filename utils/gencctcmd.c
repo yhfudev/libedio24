@@ -702,7 +702,10 @@ cb_process_brdlst_line (off_t pos, char * buf, size_t size, void *userdata)
 static void
 read_file_edio24(const char * fn)
 {
-    read_file_lines(fn, (void *)(&g_lst_edio24), cb_process_brdlst_line);
+    board_list_t *plst = &g_lst_edio24;
+    brdlst_clean(plst);
+    brdlst_init(plst);
+    read_file_lines(fn, (void *)(plst), cb_process_brdlst_line);
 }
 
 /**
@@ -712,8 +715,111 @@ read_file_edio24(const char * fn)
 static void
 read_file_board(const char * fn)
 {
-    read_file_lines(fn, (void *)(&g_lst_brd), cb_process_brdlst_line);
+    board_list_t *plst = &g_lst_brd;
+    brdlst_clean(plst);
+    brdlst_init(plst);
+    read_file_lines(fn, (void *)(plst), cb_process_brdlst_line);
 }
+
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+static int
+create_test_file_edio24conf(const char * fn_test)
+{
+    FILE *fp = NULL;
+
+    assert (NULL != fn_test);
+
+    unlink(fn_test);
+
+    fp = fopen(fn_test, "w+");
+    if (NULL == fp) {
+        fprintf(stderr, "Error in create file: '%s'\n", fn_test);
+        return -1;
+    }
+    fprintf(fp, "192.168.1.101	00:11:22:33:44:01	E-DIO24-334401" "\n");
+    fprintf(fp, "192.168.1.102	00:11:22:33:44:02	E-DIO24-334402" "\n");
+    fprintf(fp, "192.168.1.103	00:11:22:33:44:03	E-DIO24-334403" "\n");
+    fprintf(fp, "192.168.1.104	00:11:22:33:44:04	E-DIO24-334404" "\n");
+    fprintf(fp, "192.168.1.105	00:11:22:33:44:05	E-DIO24-334405" "\n");
+    fprintf(fp, "192.168.1.106	00:11:22:33:44:06	E-DIO24-334406" "\n");
+    fprintf(fp, "192.168.1.107	00:11:22:33:44:07	E-DIO24-334407" "\n");
+    fprintf(fp, "192.168.1.108	00:11:22:33:44:08	E-DIO24-334408" "\n");
+    fprintf(fp, "192.168.1.109	00:11:22:33:44:09	E-DIO24-334409" "\n");
+    fprintf(fp, "192.168.1.110	00:11:22:33:44:10	E-DIO24-334410" "\n");
+    fprintf(fp, "192.168.1.111	00:11:22:33:44:11	E-DIO24-334411" "\n");
+    fprintf(fp, "192.168.1.112	00:11:22:33:44:12	E-DIO24-334412" "\n");
+    fprintf(fp, "192.168.1.113	00:11:22:33:44:13	E-DIO24-334413" "\n");
+    fprintf(fp, "192.168.1.114	00:11:22:33:44:14	E-DIO24-334414" "\n");
+    fprintf(fp, "192.168.1.115	00:11:22:33:44:15	E-DIO24-334415" "\n");
+    fprintf(fp, "192.168.1.116	00:11:22:33:44:16	E-DIO24-334416" "\n");
+
+    fclose(fp);
+    return 0;
+}
+
+static int
+create_test_file_boardsconf(const char * fn_test)
+{
+    FILE *fp = NULL;
+
+    assert (NULL != fn_test);
+
+    unlink(fn_test);
+
+    fp = fopen(fn_test, "w+");
+    if (NULL == fp) {
+        fprintf(stderr, "Error in create file: '%s'\n", fn_test);
+        return -1;
+    }
+    fprintf(fp, "Beside CNT	112233359	1029	998877665506F505	3344556679CF	192.168.1.153	fe80:cb:0:b062::xx	fe80:cb:0:b088::xx" "\n");
+    fprintf(fp, "CCT_C01-01	112233479	707	99887766558D6DA5	33445566752C	192.168.1.19	fe80:cb:0:b062::7e10	fe80:cb:0:b088::29d4	" "\n");
+    fprintf(fp, "CCT_C01-02	112233498	717	99887766558D6DB8	334455667518	192.168.1.89	fe80:cb:0:b062::5c36	fe80:cb:0:b088::3ee4	" "\n");
+    fprintf(fp, "CCT_C01-03	112233480	718	99887766558D6DA6	33445566752B	192.168.1.28	fe80:cb:0:b062::4b6c	fe80:cb:0:b088::5912	" "\n");
+    fprintf(fp, "CCT_C01-04	112233476	720	99887766558D6DA2	33445566752F	192.168.1.11	fe80:cb:0:b062::9222	fe80:cb:0:b088::be84	" "\n");
+    fprintf(fp, "CCT_C01-05	112233551	708	99887766558D6DED	3344556674E3	192.168.1.18	fe80:cb:0:b062::a970	fe80:cb:0:b088::b1e6	" "\n");
+
+    fclose(fp);
+    return 0;
+}
+#define FN_CONF_EDIO24 "tmp-conf-edio24.txt"
+#define FN_CONF_BOARDS "tmp-conf-boards.txt"
+#endif /* CIUT_ENABLED */
+
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+#include <ciut.h>
+
+TEST_CASE( .name="read-conf", .description="test read_file_xxx.", .skip=0 ) {
+
+    board_list_t *plst = &g_lst_brd;
+
+    SECTION("test read_file_edio24") {
+        unlink(FN_CONF_EDIO24);
+        REQUIRE(0 == create_test_file_edio24conf(FN_CONF_EDIO24));
+        plst = &g_lst_edio24;
+        brdlst_clean(plst);
+        brdlst_init(plst);
+        read_file_edio24(FN_CONF_EDIO24);
+        REQUIRE(16 == brdlst_length(plst));
+        read_file_edio24(FN_CONF_EDIO24);
+        REQUIRE(16 == brdlst_length(plst));
+    }
+
+    SECTION("test read_file_board") {
+        unlink(FN_CONF_BOARDS);
+        REQUIRE(0 == create_test_file_boardsconf(FN_CONF_BOARDS));
+
+        plst = &g_lst_brd;
+        brdlst_clean(plst);
+        brdlst_init(plst);
+        read_file_board(FN_CONF_BOARDS);
+        REQUIRE(6 == brdlst_length(plst));
+        read_file_board(FN_CONF_BOARDS);
+        REQUIRE(6 == brdlst_length(plst));
+    }
+}
+
+#endif /* CIUT_ENABLED */
+
 
 /**
  * \brief get the IP section of a EDIO24 record
@@ -1128,6 +1234,75 @@ do_get_all_board(FILE *fp, const char * arg_cluster, const char *arg_cmd)
     }
 }
 
+#if defined(CIUT_ENABLED) && (CIUT_ENABLED == 1)
+#include <ciut.h>
+
+typedef struct _ciut_test_getboards_t {
+    char * arg_cluster;
+    const char *arg_cmd;
+} ciut_test_getboards_t;
+
+static int
+cb_cuit_check_output_getbrdip (FILE * outf, void * user_arg)
+{
+    ciut_test_getboards_t * arg = (ciut_test_getboards_t *)user_arg;
+    do_get_ip_board(outf, arg->arg_cluster, arg->arg_cmd);
+    return 0;
+}
+
+static int
+cb_cuit_check_output_getboards (FILE * outf, void * user_arg)
+{
+    ciut_test_getboards_t * arg = (ciut_test_getboards_t *)user_arg;
+    do_get_all_board(outf, arg->arg_cluster, arg->arg_cmd);
+    return 0;
+}
+
+TEST_CASE( .name="get-boards", .description="test get boards.", .skip=0 ) {
+    int i;
+    ciut_test_getboards_t args;
+
+    static const char * iodata_boards[] = {
+        // cluster, position, output
+        "p=1", "p=1",   "CCT_C01-01	112233479	707	99887766558D6DA5	33445566752C	192.168.1.19	fe80:cb:0:b062::7e10	fe80:cb:0:b088::29d4\n",
+        "p=1", "p=2",   "CCT_C01-02	112233498	717	99887766558D6DB8	334455667518	192.168.1.89	fe80:cb:0:b062::5c36	fe80:cb:0:b088::3ee4\n",
+    };
+
+    static const char * iodata_boardsip[] = {
+        // cluster, position, output
+        "p=1", "p=1",   "CCT_C01-01	192.168.1.19",
+        "p=1", "p=2",   "CCT_C01-02	192.168.1.89",
+    };
+    board_list_t *plst = &g_lst_brd;
+    unlink(FN_CONF_EDIO24);
+    REQUIRE(0 == create_test_file_edio24conf(FN_CONF_EDIO24));
+    plst = &g_lst_edio24;
+    read_file_edio24(FN_CONF_EDIO24);
+    REQUIRE(16 == brdlst_length(plst));
+
+    unlink(FN_CONF_BOARDS);
+    REQUIRE(0 == create_test_file_boardsconf(FN_CONF_BOARDS));
+    plst = &g_lst_brd;
+    read_file_board(FN_CONF_BOARDS);
+    REQUIRE(6 == brdlst_length(plst));
+
+    SECTION("test output get-boards") {
+        for (i = 0; i < ARRAY_NUM(iodata_boards); i += 3) {
+            CIUT_LOG ("board test idx=%d", i/3);
+            args.arg_cluster = iodata_boards[i + 0];
+            args.arg_cmd = iodata_boards[i + 1];
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_getboards, &args, iodata_boards[i + 2]));
+        }
+        for (i = 0; i < ARRAY_NUM(iodata_boardsip); i += 3) {
+            CIUT_LOG ("board test idx=%d", i/3);
+            args.arg_cluster = iodata_boardsip[i + 0];
+            args.arg_cmd = iodata_boardsip[i + 1];
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_getbrdip, &args, iodata_boardsip[i + 2]));
+        }
+    }
+}
+#endif /* CIUT_ENABLED */
+
 /**
  * \brief get the EDIO24 raw commands sequence to set attenuations
  * \param fp: the FILE pointer for output
@@ -1470,7 +1645,7 @@ TEST_CASE( .name="do-test", .description="test output cluster.", .skip=0 ) {
             CIUT_LOG ("output atten idx=%d", i/3);
             args.arg_cluster = iodata_atten[i + 0];
             args.arg_cmd = iodata_atten[i + 1];
-            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_doatten, &args,iodata_atten[i + 2]));
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_doatten, &args, iodata_atten[i + 2]));
         }
     }
     SECTION("test output power's valid p arg") {
