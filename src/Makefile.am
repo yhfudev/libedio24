@@ -1,5 +1,3 @@
-CC=gcc
-#CC=g++
 LEX=flex
 
 #LDADD=-lxslt -lxml2
