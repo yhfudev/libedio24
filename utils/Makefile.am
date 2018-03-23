@@ -4,19 +4,21 @@ EXTRA_DIST=
 AM_LDFLAGS=
 AM_CFLAGS=
 
-DEFS+= \
+DEFS += \
     `getconf LFS_CFLAGS` \
     `getconf LFS64_CFLAGS` \
     -D_GNU_SOURCE \
     -D_FILE_OFFSET_BITS=64 \
+    -DHAVE_MMAP64=1 \
     -DUSE_EDIO24_SERVER=1 \
     $(NULL)
 
-AM_CFLAGS+= \
+AM_CFLAGS += \
     -I$(top_srcdir)/src \
     -I$(top_srcdir)/include/ \
     -I$(top_builddir)/ \
     -I$(top_builddir)/src/ \
+    -I$(top_builddir)/include/ \
     $(NULL)
 
 AM_LDFLAGS += \
@@ -38,12 +40,31 @@ if DEBUG
 # use "valgrind --tool=memcheck --leak-check=yes" to check memory leak, MemWatch will drag the program.
 #DEFS+=-DMEMWATCH
 DEFS+= -DDEBUG=1
+AM_CFLAGS +=-g -Wall
 AM_LDFLAGS += -lbfd
-AM_CFLAGS+=-g -Wall
 
 else
 AM_CFLAGS+=-O3 -Wall
 endif
+
+# add "VALGRIND = valgrind --gen-suppressions=all" in your makefile to get the content of .supp
+# default valgrind supp file: /usr/lib/valgrind/default.supp
+@VALGRIND_CHECK_RULES@
+VALGRIND_SUPPRESSIONS_FILES = libedio24-valgrind-test.supp
+EXTRA_DIST += libedio24-valgrind-test.supp
+
+#if USE_VALGRIND
+#TESTS_ENVIRONMENT=$(VALGRIND) --quiet --trace-children=yes --error-exitcode=1 --dsymutil=yes --leak-check=yes 
+#endif
+
+#check-valgrind: check $(TESTS)
+#	@which valgrind >/dev/null || (echo "Running the valgrind target without having valgrind. Perhaps install it first?"; exit 1;)
+#	@for test in $$(echo $(TESTS) | sed 's/uitls\//utils\/.libs\//g') ; do \
+#	valgrind --dsymutil=yes --suppressions=$(srcdir)/valgrind.suppressions --gen-suppressions=all --error-exitcode=1 ./$${test} ; \
+#        done
+#        CK_FORK=no LD_LIBRARY_PATH=$(abs_top_builddir)/.libs valgrind --error-exitcode=1 --leak-resolution=low --quiet \
+#            --leak-check=full --show-possibly-lost=no --suppressions=tests/valgrind.suppressions $${test} ;
+
 
 #AM_CFLAGS+=-fpermissive
 
@@ -65,28 +86,32 @@ DEFS+=$(EXT_FLAGS)
 #AM_CFLAGS+=$(EXT_FLAGS)
 
 
+# force the autoconf use g++ to link the c program with c++ lib
+dummy.cpp:
+	touch $@
+clean-local-dummy:
+	-rm -rf dummy.cpp
+
+ciutexc.c:
+	-echo "#define CIUT_PLACE_MAIN 1" > $@
+	-echo "#include <ciut.h>" >> $@
+	-echo "#include \"../src/libedio24.c\"" >> $@
+	-echo "int main(int argc, char * argv[]) { return ciut_main(argc, argv); }" >> $@
+clean-local-check:
+	-rm -rf ciutexc.c
+
+clean-local: clean-local-check clean-local-dummy
+
+
 #noinst_PROGRAMS=ciutexc
 TESTS=ciutexc
 check_PROGRAMS=ciutexc
 bin_PROGRAMS=edio24cli edio24sim gencctcmd
 
-# add "VALGRIND = valgrind --gen-suppressions=all" in your makefile to get the content of .supp
-# default valgrind supp file: /usr/lib/valgrind/default.supp
-@VALGRIND_CHECK_RULES@
-VALGRIND_SUPPRESSIONS_FILES = libedio24-valgrind-test.supp
-EXTRA_DIST += libedio24-valgrind-test.supp
 
-#if USE_VALGRIND
-#TESTS_ENVIRONMENT=$(VALGRIND) --quiet --trace-children=yes --error-exitcode=1 --dsymutil=yes --leak-check=yes 
-#endif
-
-#check-valgrind: check $(TESTS)
-#	@which valgrind >/dev/null || (echo "Running the valgrind target without having valgrind. Perhaps install it first?"; exit 1;)
-#	@for test in $$(echo $(TESTS) | sed 's/uitls\//utils\/.libs\//g') ; do \
-#	valgrind --dsymutil=yes --suppressions=$(srcdir)/valgrind.suppressions --gen-suppressions=all --error-exitcode=1 ./$${test} ; \
-#        done
-#        CK_FORK=no LD_LIBRARY_PATH=$(abs_top_builddir)/.libs valgrind --error-exitcode=1 --leak-resolution=low --quiet \
-#            --leak-check=full --show-possibly-lost=no --suppressions=tests/valgrind.suppressions $${test} ;
+ciutexc_LDADD = -luv
+ciutexc_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
+ciutexc_LDFLAGS = $(AM_LDFLAGS)
 
 
 gencctcmd_SOURCES= \
@@ -113,22 +138,6 @@ EXTRA_DIST += \
     utils.h \
     $(NULL)
 
-# force the autoconf use g++ to link the c program with c++ lib
-dummy.cpp:
-	touch $@
-clean-local-dummy:
-	-rm -rf dummy.cpp
-
-ciutexc.c:
-	-echo "#define CIUT_PLACE_MAIN 1" > $@
-	-echo "#include <ciut.h>" >> $@
-	-echo "#include \"../src/libedio24.c\"" >> $@
-	-echo "int main(int argc, char * argv[]) { return ciut_main(argc, argv); }" >> $@
-clean-local-check:
-	-rm -rf ciutexc.c
-
-clean-local: clean-local-check clean-local-dummy
-
 edio24cli_LDADD = $(top_builddir)/src/libedio24.la -luv -ldl
 edio24cli_CPPFLAGS = $(AM_CFLAGS)
 #edio24cli_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
@@ -138,10 +147,5 @@ edio24sim_LDADD = $(top_builddir)/src/libedio24.la -luv -ldl
 edio24sim_CPPFLAGS = $(AM_CFLAGS)
 #edio24sim_LDFLAGS = -L$(top_builddir)/src/ -ledio24 $(AM_LDFLAGS)
 edio24sim_LDFLAGS = $(AM_LDFLAGS)
-
-ciutexc_LDADD = -luv
-ciutexc_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
-ciutexc_LDFLAGS = $(AM_LDFLAGS)
-
 
 

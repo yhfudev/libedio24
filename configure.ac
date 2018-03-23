@@ -58,26 +58,6 @@ AC_SUBST(htmldocdir)
 AM_CONDITIONAL(ENABLE_DOXYGEN_DOC,test "x$enable_doxygen_doc" = "xyes")
 
 
-# ciut
-AC_ARG_WITH(ciut,
-            [AS_HELP_STRING([--with-ciut],[Base directory to look for ciut headers and libraries])],
-            [CIUT_LIB_DIR="${withval}/lib"
-             CIUT_INC_DIR="${withval}/include"],)
-
-AC_ARG_WITH(ciut-lib,
-            [AS_HELP_STRING([--with-ciut-lib],[Directory to look for ciut libraries])],
-            [CIUT_LIB_DIR="${withval}"],)
-
-AC_ARG_WITH(ciut-include,
-            [AS_HELP_STRING([--with-ciut-include],[Directory to look for ciut headers])],
-            [CIUT_INC_DIR="${withval}"],)
-if test "x$CIUT_INC_DIR" != "x" ; then
-   CFLAGS="-I${CIUT_INC_DIR} ${CFLAGS}"
-fi
-if test "x$CIUT_LIB_DIR" != "x" ; then
-   LDFLAGS="-L${CIUT_LIB_DIR} ${LDFLAGS}"
-fi
-
 
 # libuv
 AC_ARG_WITH(libuv,
@@ -106,6 +86,26 @@ else
   AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [])
 fi
 
+
+# ciut
+AC_ARG_WITH(ciut,
+            [AS_HELP_STRING([--with-ciut],[Base directory to look for ciut headers and libraries])],
+            [CIUT_LIB_DIR="${withval}/lib"
+             CIUT_INC_DIR="${withval}/include"],)
+
+AC_ARG_WITH(ciut-lib,
+            [AS_HELP_STRING([--with-ciut-lib],[Directory to look for ciut libraries])],
+            [CIUT_LIB_DIR="${withval}"],)
+
+AC_ARG_WITH(ciut-include,
+            [AS_HELP_STRING([--with-ciut-include],[Directory to look for ciut headers])],
+            [CIUT_INC_DIR="${withval}"],)
+if test "x$CIUT_INC_DIR" != "x" ; then
+   CFLAGS="-I${CIUT_INC_DIR} ${CFLAGS}"
+fi
+if test "x$CIUT_LIB_DIR" != "x" ; then
+   LDFLAGS="-L${CIUT_LIB_DIR} ${LDFLAGS}"
+fi
 
 AX_VALGRIND_DFLT([sgcheck], [off])
 AX_VALGRIND_CHECK
@@ -179,6 +179,7 @@ if test "x$enable_coverage" = "xyes"; then
     AC_SUBST(COVERAGE_LDFLAGS)
 
     CFLAGS="${COVERAGE_CFLAGS} ${CFLAGS}"
+    CXXFLAGS="${COVERAGE_CFLAGS} ${CXXFLAGS}"
     LDFLAGS="${COVERAGE_LDFLAGS} ${LDFLAGS}"
 
     AC_MSG_NOTICE([coverage enabled, adding "-g -O0" to CFLAGS])
