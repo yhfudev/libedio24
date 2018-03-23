@@ -3,20 +3,24 @@ SUBDIRS= src utils
 
 ACLOCAL_AMFLAGS = -I m4
 
-#DOC_FILES= \
-#    $(top_srcdir)/doc/cndoc.tex \
-#    $(top_srcdir)/doc/Doxyfile.in \
-#    $(top_srcdir)/doc/genfooter.tex \
-#    $(top_srcdir)/doc/genheader.tex \
-#    $(top_srcdir)/doc/Makefile.am \
-#    $(top_srcdir)/doc/Makefile.in \
-#    $(NULL)
+DOC_FILES= \
+    $(top_srcdir)/doc/cndoc.tex \
+    $(top_srcdir)/doc/Doxyfile.in \
+    $(top_srcdir)/doc/genfooter.tex \
+    $(top_srcdir)/doc/genheader.tex \
+    $(top_srcdir)/doc/Makefile.am \
+    $(top_srcdir)/doc/Makefile.in \
+    $(NULL)
 
 include_HEADERS = \
     $(top_srcdir)/include/libedio24.h \
     $(NULL)
 
 EXTRA_DIST=autogen.sh autoclean.sh AUTHORS README.md ChangeLog \
+    $(top_srcdir)/m4/ax_check_compile_flag.m4 \
+    $(top_srcdir)/m4/ax_check_link_flag.m4 \
+    $(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
+    $(top_srcdir)/m4/ax_valgrind_check.m4 \
     $(DOC_FILES) \
     $(NULL)
 

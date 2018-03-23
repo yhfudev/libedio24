@@ -111,7 +111,6 @@ edio24sim_SOURCES= \
 
 EXTRA_DIST += \
     utils.h \
-    ciut-sio.h \
     $(NULL)
 
 # force the autoconf use g++ to link the c program with c++ lib

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 ./autoclean.sh
 
@@ -49,9 +49,9 @@ else
   cd libuv && git pull && ./autogen.sh && ./configure && make clean && make -j8 && cd ..
 
   which "$CC" || CC=gcc
-  which "$CXX" || CXX=g++
+  which "$CXX" || if [[ "$CC" =~ .*clang.* ]]; then CXX=clang++; else CXX=g++; fi
   CC=$CC CXX=$CXX ./configure --disable-shared --enable-static --enable-valgrind --enable-coverage --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test
-  make clean; make coverage CC=$CC CXX=$CXX
+  make clean; make coverage CC=$CC CXX=$CXX; make check-valgrind CC=$CC CXX=$CXX
 fi
 
 #make clean
