@@ -1923,7 +1923,6 @@ TEST_CASE( .name="edio24-read", .description="test edio24 buffers for edio24_pkt
 TEST_CASE( .name="edio24-read", .description="test edio24 buffers for edio24_pkt_read_hdr_xxx.", .skip=0 ) {
     uint8_t buffer[80];
     uint8_t frame_id = 0;
-    ssize_t ret;
 
     SECTION("test parameters for edio24_cli_verify_xxx") {
         int ret;

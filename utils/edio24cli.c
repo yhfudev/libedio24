@@ -600,6 +600,7 @@ main(int argc, char * argv[])
                 break;
         }
     }
+    (void)flg_verbose;
 
     return main_cli(host, port_udp, port_tcp, flg_discovery, fn_conf);
 }

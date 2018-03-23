@@ -138,10 +138,7 @@ pf_bsearch_cb_comp_char(void *userdata, size_t idx, void * data_pin)
 TEST_CASE( .name="binsearch", .description="test search.", .skip=0 ) {
 #define CSTR_LARGE "abcdefghijklmnopqrstuvwxyz"
 
-    int i;
-
     SECTION("test binary search callback function") {
-        char * list = CSTR_LARGE;
         char pin = 'c';
 
         assert (sizeof(CSTR_LARGE) > 1);
@@ -647,12 +644,12 @@ test_parse_hex_buf(char * static_string, size_t len)
 TEST_CASE( .description="test hex string.", .skip=0 ) {
 
     SECTION("test hex string parameters") {
-        char buf[] = "11223344556677889900";
+        uint8_t buf[] = "11223344556677889900";
         REQUIRE (0 > parse_hex_buf(NULL, 0, NULL, 0));
-        REQUIRE (0 > parse_hex_buf(NULL, 0, "", 0));
-        REQUIRE (0 == parse_hex_buf("", 0, "", 0));
-        REQUIRE (0 > parse_hex_buf("a", 1, "", 0));
-        REQUIRE (0 > parse_hex_buf("ab", 2, "", 0));
+        REQUIRE (0 > parse_hex_buf(NULL, 0, (uint8_t *)"", 0));
+        REQUIRE (0 == parse_hex_buf("", 0, (uint8_t *)"", 0));
+        REQUIRE (0 > parse_hex_buf("a", 1, (uint8_t *)"", 0));
+        REQUIRE (0 > parse_hex_buf("ab", 2, (uint8_t *)"", 0));
         REQUIRE (0 > parse_hex_buf("a", 1, buf, sizeof(buf) - 1));
         REQUIRE (0 > parse_hex_buf("ab", 2, buf, sizeof(buf) - 1));
         REQUIRE (0 > parse_hex_buf("0x", 2, buf, sizeof(buf) - 1));

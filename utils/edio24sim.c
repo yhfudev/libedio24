@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h> // STDERR_FILENO
 #include <libgen.h> // basename()
+#include <string.h> // memmove
 #include <getopt.h>
 #include <assert.h>
 #include <uv.h>
@@ -99,7 +100,7 @@ on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
         }
     }
 
-    fprintf(stderr, "udp svr read %d\n", nread);
+    fprintf(stderr, "udp svr read %" PRIiSZ "\n", nread);
     if (nread < 0) {
         fprintf(stderr, "udp svr read error %s\n", uv_err_name(nread));
         uv_close(handle, on_udp_svr_close);
@@ -111,7 +112,7 @@ on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
         fprintf (stderr, "udp svr recv from addr NULL!\n");
     } else {
         char sender[17] = { 0 };
-        struct sockaddr_in *paddr = addr;
+        struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
         uv_ip4_name((const struct sockaddr_in*) addr, sender, sizeof(sender) - 1);
         fprintf(stderr, "udp svr recv from addr %s, port %d\n", sender, ntohs(paddr->sin_port));
     }
@@ -128,9 +129,9 @@ on_udp_srv_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const stru
             sz_needed_out = 0;
 
             ret = edio24_svr_process_udp(flg_randfail, (uint8_t *)(buf->base), nread, (uint8_t *)(buf->base), &sz_out, &sz_needed_out);
-            fprintf(stderr, "udp svr discovery process ret=%d, needout=%d, flg_randfail=%s; g_flg_randfail=%s\n", ret, sz_needed_out, (flg_randfail?"use fail":"use normal"), (g_edio24svr.flg_randfail?"use fail":"use normal"));
+            fprintf(stderr, "udp svr discovery process ret=%d, needout=%" PRIuSZ ", flg_randfail=%s; g_flg_randfail=%s\n", ret, sz_needed_out, (flg_randfail?"use fail":"use normal"), (g_edio24svr.flg_randfail?"use fail":"use normal"));
             if ((sz_out > 0) && (NULL != addr)) {
-                fprintf(stderr, "udp svr send back sz=%d\n", sz_out);
+                fprintf(stderr, "udp svr send back sz=%" PRIuSZ "\n", sz_out);
                 int r = uv_udp_send(req, handle, &req->buf, 1, (const struct sockaddr *)addr, on_udp_svr_write);
                 if (r) {
                     /* error */
@@ -522,6 +523,7 @@ main(int argc, char * argv[])
                 break;
         }
     }
+    (void)flg_verbose;
 
     return main_svr(host, port_udp, port_tcp, flg_randfail);
 }

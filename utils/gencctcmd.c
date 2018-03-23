@@ -9,7 +9,7 @@
 #include <stdlib.h> // atoi
 #include <stdint.h> // uint8_t
 #include <ctype.h> // isdigit()
-#include <string.h>
+#include <string.h> // memmove
 #include <getopt.h>
 #include <assert.h>
 
@@ -382,19 +382,19 @@ TEST_CASE( .description="test gencctcmd output_xxx.", .skip=0 ) {
     SECTION("test output atten's valid p arg") {
         for (i = 0; i < ARRAY_NUM(iodata_atten); i += 2) {
             CIUT_LOG ("output atten idx=%d", i/2);
-            REQUIRE(0 == cuit_check_output(output_atten, iodata_atten[i + 0], iodata_atten[i + 1]));
+            REQUIRE(0 == cuit_check_output(output_atten, (void *)iodata_atten[i + 0], iodata_atten[i + 1]));
         }
     }
     SECTION("test output power's valid p arg") {
         for (i = 0; i < ARRAY_NUM(iodata_power); i += 2) {
             CIUT_LOG ("output power idx=%d", i/2);
-            REQUIRE(0 == cuit_check_output(output_power, iodata_power[i + 0], iodata_power[i + 1]));
+            REQUIRE(0 == cuit_check_output(output_power, (void *)iodata_power[i + 0], iodata_power[i + 1]));
         }
     }
     SECTION("test output power read") {
         for (i = 0; i < ARRAY_NUM(iodata_power_read); i += 2) {
             CIUT_LOG ("output power idx=%d", i/2);
-            REQUIRE(0 == cuit_check_output(output_power_read, iodata_power_read[i + 0], iodata_power_read[i + 1]));
+            REQUIRE(0 == cuit_check_output(output_power_read, (void *)iodata_power_read[i + 0], iodata_power_read[i + 1]));
         }
     }
 }
@@ -573,7 +573,7 @@ TEST_CASE( .description="test board list.", .skip=0 ) {
 
         lst_test.sz_max = 1;
         lst_test.sz_cur = 2;
-        lst_test.list = 3;
+        lst_test.list = (void *)3;
         brdlst_init(&lst_test);
         REQUIRE(0 == lst_test.sz_max);
         REQUIRE(0 == lst_test.sz_cur);
@@ -1238,7 +1238,7 @@ do_get_all_board(FILE *fp, const char * arg_cluster, const char *arg_cmd)
 #include <ciut.h>
 
 typedef struct _ciut_test_getboards_t {
-    char * arg_cluster;
+    const char * arg_cluster;
     const char *arg_cmd;
 } ciut_test_getboards_t;
 
@@ -1291,13 +1291,13 @@ TEST_CASE( .name="get-boards", .description="test get boards.", .skip=0 ) {
             CIUT_LOG ("board test idx=%d", i/3);
             args.arg_cluster = iodata_boards[i + 0];
             args.arg_cmd = iodata_boards[i + 1];
-            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_getboards, &args, iodata_boards[i + 2]));
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_getboards, (void *)(&args), iodata_boards[i + 2]));
         }
         for (i = 0; i < ARRAY_NUM(iodata_boardsip); i += 3) {
             CIUT_LOG ("board test idx=%d", i/3);
             args.arg_cluster = iodata_boardsip[i + 0];
             args.arg_cmd = iodata_boardsip[i + 1];
-            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_getbrdip, &args, iodata_boardsip[i + 2]));
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_getbrdip, (void *)(&args), iodata_boardsip[i + 2]));
         }
     }
 }
@@ -1525,8 +1525,8 @@ do_getpower(FILE *fp, const char * arg_cluster, const char *arg_cmd)
 #include <ciut.h>
 
 typedef struct _ciut_test_dotest_t {
-    char * arg_cluster;
-    const char *arg_cmd;
+    const char * arg_cluster;
+    const char * arg_cmd;
 } ciut_test_dotest_t;
 
 static int
@@ -1645,7 +1645,7 @@ TEST_CASE( .name="do-test", .description="test output cluster.", .skip=0 ) {
             CIUT_LOG ("output atten idx=%d", i/3);
             args.arg_cluster = iodata_atten[i + 0];
             args.arg_cmd = iodata_atten[i + 1];
-            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_doatten, &args, iodata_atten[i + 2]));
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_doatten, (void *)(&args), iodata_atten[i + 2]));
         }
     }
     SECTION("test output power's valid p arg") {
@@ -1653,7 +1653,7 @@ TEST_CASE( .name="do-test", .description="test output cluster.", .skip=0 ) {
             CIUT_LOG ("output power idx=%d", i/3);
             args.arg_cluster = iodata_power[i + 0];
             args.arg_cmd = iodata_power[i + 1];
-            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_dosetpower, &args, iodata_power[i + 2]));
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_dosetpower, (void *)(&args), iodata_power[i + 2]));
         }
     }
     SECTION("test output power_read valid p arg") {
@@ -1661,7 +1661,7 @@ TEST_CASE( .name="do-test", .description="test output cluster.", .skip=0 ) {
             CIUT_LOG ("output power idx=%d", i/3);
             args.arg_cluster = iodata_power_read[i + 0];
             args.arg_cmd = iodata_power_read[i + 1];
-            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_dogetpower, &args, iodata_power_read[i + 2]));
+            REQUIRE(0 == cuit_check_output(cb_cuit_check_output_dogetpower, (void *)(&args), iodata_power_read[i + 2]));
         }
     }
 
@@ -1823,6 +1823,7 @@ main(int argc, char * argv[])
                 break;
         }
     }
+    (void)flg_verbose;
 
     brdlst_clean(&g_lst_brd);
     brdlst_clean(&g_lst_edio24);
