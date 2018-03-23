@@ -45,7 +45,7 @@ include_HEADERS = \
     $(top_srcdir)/include/libedio24.h \
     $(NULL)
 
-EXTRA_DIST= \
+EXTRA_DIST += \
     libedio24.pc.in \
     $(NULL)
 

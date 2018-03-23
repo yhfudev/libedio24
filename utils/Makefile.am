@@ -1,8 +1,8 @@
 
-EXTRA_DIST=
-
 AM_LDFLAGS=
 AM_CFLAGS=
+EXTRA_DIST=
+
 
 DEFS += \
     `getconf LFS_CFLAGS` \

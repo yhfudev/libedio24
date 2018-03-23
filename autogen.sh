@@ -31,9 +31,9 @@ autoconf
 autoreconf -f -i -Wall,no-obsolete
 autoreconf -f -i -Wall,no-obsolete
 
-exit 0
+if [ 1 = 1 ]; then
+  exit 0
 
-if [ 0 = 1 ]; then
   #./configure --enable-debug --disable-shared --enable-static --enable-coverage --enable-valgrind
   ./configure --disable-debug --disable-shared --enable-static --disable-coverage --disable-valgrind
 
