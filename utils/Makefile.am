@@ -40,7 +40,7 @@ if DEBUG
 # use "valgrind --tool=memcheck --leak-check=yes" to check memory leak, MemWatch will drag the program.
 #DEFS+=-DMEMWATCH
 DEFS+= -DDEBUG=1
-AM_CFLAGS +=-g -Wall
+AM_CFLAGS +=-g -O0 -Wall
 AM_LDFLAGS += -lbfd
 
 else

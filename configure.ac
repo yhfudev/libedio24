@@ -73,7 +73,11 @@ AC_ARG_WITH(libuv-include,
             [AS_HELP_STRING([--with-libuv-include],[Directory to look for libuv headers])],
             [LIBUV_INC_DIR="${withval}"],)
 if test "x$LIBUV_INC_DIR" != "x" ; then
-   CFLAGS="-I${LIBUV_INC_DIR} ${CFLAGS}"
+  CFLAGS="-I${LIBUV_INC_DIR} ${CFLAGS}"
+  SAVE_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS -I${LIBUV_INC_DIR}"
+  AC_CHECK_HEADERS([uv.h], [ LIBUVH='yes' ], AC_MSG_ERROR([Couldn't find libuv header ]), [])
+  CPPFLAGS="$SAVE_CPPFLAGS"
 else
   #CFLAGS="-std=iso9899:1990 ${CFLAGS}"
   #AC_LANG_PUSH([C++])
@@ -81,9 +85,10 @@ else
   #AC_LANG_POP
 fi
 if test "x$LIBUV_LIB_DIR" != "x" ; then
-   LDFLAGS="-L${LIBUV_LIB_DIR} ${LDFLAGS}"
+  LDFLAGS="-L${LIBUV_LIB_DIR} -luv ${LDFLAGS}"
+  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-L${LIBUV_LIB_DIR} -lrt])
 else
-  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [])
+  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-lrt])
 fi
 
 
@@ -101,10 +106,15 @@ AC_ARG_WITH(ciut-include,
             [AS_HELP_STRING([--with-ciut-include],[Directory to look for ciut headers])],
             [CIUT_INC_DIR="${withval}"],)
 if test "x$CIUT_INC_DIR" != "x" ; then
-   CFLAGS="-I${CIUT_INC_DIR} ${CFLAGS}"
+  CFLAGS="-I${CIUT_INC_DIR} ${CFLAGS}"
+  SAVE_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS -I${CIUT_INC_DIR}"
+  AC_CHECK_HEADERS([ciut.h], [ LIBCIUTH='yes' ], AC_MSG_ERROR([Couldn't find ciut header ]), [])
+  CPPFLAGS="$SAVE_CPPFLAGS"
 fi
 if test "x$CIUT_LIB_DIR" != "x" ; then
-   LDFLAGS="-L${CIUT_LIB_DIR} ${LDFLAGS}"
+  LDFLAGS="-L${CIUT_LIB_DIR} ${LDFLAGS}"
+  #AC_CHECK_LIB([ciut], [ciut_main], [ LIBCIUTL='yes' ], AC_MSG_ERROR([Couldn't find ciut lib file ]), [-L${CIUT_LIB_DIR} -lciut])
 fi
 
 AX_VALGRIND_DFLT([sgcheck], [off])
