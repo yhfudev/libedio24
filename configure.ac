@@ -71,7 +71,7 @@ esac
 AC_MSG_RESULT([$native_win32])
 AM_CONDITIONAL(OS_WIN32, test "x$native_win32" = "xyes")
 if test x${native_win32} = xyes; then
-  LDFLAGS="${LDFLAGS} -lws2_32 -lpsapi -liphlpapi -lshell32 -luserenv -luser32"
+  LIBS="${LIBS} -lws2_32 -lpsapi -liphlpapi -lshell32 -luserenv -luser32"
 fi
 
 
