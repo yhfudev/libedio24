@@ -1,6 +1,6 @@
 environment:
   CYG_MIRROR: http://cygwin.mirror.constant.com
-  CYG_PACKAGES: make,gcc-core
+  CYG_PACKAGES: make,gcc-core,pkg-config
   DOCUMENT_FOLDER: /usr/local/share/doc/romancal
   matrix:
     - MSYSTEM: MINGW64
@@ -40,6 +40,7 @@ install:
   - if defined MSYSTEM (%BASH% -lc "yes | pacman -Sy")
   - if defined MSYSTEM (%BASH% -lc "yes | pacman -S bash pacman --noconfirm --needed")
   - if defined MSYSTEM (%BASH% -lc "yes | pacman -Su --noconfirm")
+  - if defined MSYSTEM (%BASH% -lc "yes | pacman -S pkg-config --noconfirm --needed")
   # the following line is not a duplicate line:
   # it is necessary to upgrade the MSYS base files and after that all the packages
   # the 2 separate commands/lines are required because a new shell is necessary for each step
@@ -50,7 +51,9 @@ install:
 build_script:
   - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git clone --depth=1 --branch v1.19.2 https://github.com/libuv/libuv.git && cd libuv && ./autogen.sh && ./configure --enable-static --disable-shared && make clean && make -j8 && make install && cd ..")
   - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git clone --depth=1 https://github.com/yhfudev/cpp-ci-unit-test.git")
-  - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git submodule update --init && ./autogen.sh && ./configure --enable-static --disable-shared --disable-coverage --disable-valgrind --with-libuv-include=`pwd`/libuv/include --with-libuv-lib=`pwd`/libuv/ --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I$(cygpath ${APPVEYOR_BUILD_FOLDER}) && make DOCUMENT_FOLDER=$(cygpath %DOCUMENT_FOLDER%) install && make check && utils/ciutexc -")
+  #- if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git submodule update --init && ./autogen.sh && ./configure --enable-static --disable-shared --disable-coverage --disable-valgrind --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I$(cygpath ${APPVEYOR_BUILD_FOLDER}) && make DOCUMENT_FOLDER=$(cygpath %DOCUMENT_FOLDER%) install && make check && utils/ciutexc -")
+  - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && git submodule update --init && ./autogen.sh && ./configure --enable-static --disable-shared --disable-coverage --disable-valgrind --with-ciut=`pwd`/cpp-ci-unit-test CPPFLAGS=-I$(cygpath ${APPVEYOR_BUILD_FOLDER}) || cat config.log")
+  - if defined BASH (%BASH% -lc "cd $(cygpath ${APPVEYOR_BUILD_FOLDER}) && make DOCUMENT_FOLDER=$(cygpath %DOCUMENT_FOLDER%) install && make check && utils/ciutexc -")
 
 
 test_script:
