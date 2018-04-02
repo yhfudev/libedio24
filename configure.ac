@@ -59,6 +59,23 @@ AM_CONDITIONAL(ENABLE_DOXYGEN_DOC,test "x$enable_doxygen_doc" = "xyes")
 
 
 
+AC_MSG_CHECKING([for native Win32])
+case "$host_os" in
+  *cygwin* | *msys* | *mingw* | *pw32 | *cegcc*)
+    native_win32=yes
+    ;;
+  *)
+    native_win32=no
+    ;;
+esac
+AC_MSG_RESULT([$native_win32])
+AM_CONDITIONAL(OS_WIN32, test "x$native_win32" = "xyes")
+if test x${native_win32} = xyes; then
+  LDFLAGS="${LDFLAGS} -lws2_32 -lpsapi -liphlpapi -lshell32 -luserenv -luser32"
+fi
+
+
+
 # libuv
 AC_ARG_WITH(libuv,
             [AS_HELP_STRING([--with-libuv],[Base directory to look for libuv headers and libraries])],
@@ -88,7 +105,7 @@ if test "x$LIBUV_LIB_DIR" != "x" ; then
   LDFLAGS="-L${LIBUV_LIB_DIR} -luv ${LDFLAGS}"
   AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-L${LIBUV_LIB_DIR} -pthread])
 else
-  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [`PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig pkg-config --libs uv` -pthread])
+  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-pthread])
 fi
 
 
