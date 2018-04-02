@@ -32,6 +32,8 @@ uv_loop_t * loop = NULL; /**< this have to be global variable, since it needs to
 typedef struct _edio24svr_t {
     char flg_used; /**< 1 -- if the service in busy, only one connect were allowed */
     char flg_randfail; /**< 1 -- if the server send out fail message on requests */
+    time_t starttime;
+    time_t timeout;
 
     size_t sz_data; /**< the lenght of data in the buffer */
     uint8_t buffer[(EDIO24_PKT_LENGTH_MIN + 6) * 5]; /**< the buffer to cache the received packets */
@@ -194,8 +196,9 @@ write_buf_free (write_buf_t *wr)
 void
 on_tcp_svr_close(uv_handle_t* handle)
 {
-    fprintf(stderr, "tcp svr closed.\n");
+    fprintf(stderr, "tcp svr client closed.\n");
     g_edio24svr.flg_used = 0;
+    //raise(SIGINT); // send signal and handle by uv_signal_cb
 }
 
 void
@@ -401,13 +404,54 @@ on_tcp_svr_accept (uv_stream_t *server, int status)
 }
 
 /*****************************************************************************/
-int
-main_svr(const char * host, int port_udp, int port_tcp, char flg_randfail)
+
+static char flg_has_error = 0;
+
+static void
+idle_cb (uv_idle_t *handle)
 {
+    time_t curtime;
+    time(&curtime);
+    if (g_edio24svr.starttime + g_edio24svr.timeout <= curtime) {
+        flg_has_error = 1;
+        uv_stop(uv_default_loop());
+        fprintf(stderr, "timeout: %d\n", (int)g_edio24svr.timeout);
+    }
+}
+
+static void
+on_uv_close(uv_handle_t* handle)
+{
+    if (handle != NULL) {
+        //delete handle;
+    }
+}
+
+static void
+on_uv_walk(uv_handle_t* handle, void* arg)
+{
+    uv_close(handle, on_uv_close);
+}
+
+static void
+on_sigint_received(uv_signal_t *handle, int signum)
+{
+    int result = uv_loop_close(handle->loop);
+    if (result == UV_EBUSY) {
+        uv_walk(handle->loop, on_uv_walk, NULL);
+    }
+}
+
+int
+main_svr(const char * host, int port_udp, int port_tcp, time_t timeout, char flg_randfail)
+{
+    int ret = 0;
     struct sockaddr_in addr_udp;
     struct sockaddr_in addr_tcp;
     uv_udp_t uvudp;
     uv_tcp_t uvtcp;
+    uv_idle_t idler;
+    uv_signal_t sigint;
 
     // setup service related info
     memset (&g_edio24svr, 0, sizeof (g_edio24svr));
@@ -416,6 +460,16 @@ main_svr(const char * host, int port_udp, int port_tcp, char flg_randfail)
     g_edio24svr.flg_randfail = flg_randfail;
 
     loop = uv_default_loop();
+    assert (NULL != loop);
+
+    uv_signal_init(loop, &sigint);
+    uv_signal_start(&sigint, on_sigint_received, SIGINT);
+    if (timeout > 0) {
+        uv_idle_init(loop, &idler);
+        uv_idle_start(&idler, idle_cb);
+    }
+    time (&(g_edio24svr.starttime));
+    g_edio24svr.timeout = timeout;
 
     // setup the UDP listen port
     uv_ip4_addr(host, port_udp, &addr_udp);
@@ -434,7 +488,14 @@ main_svr(const char * host, int port_udp, int port_tcp, char flg_randfail)
         return 1;
     }
 
-    return uv_run(loop, UV_RUN_DEFAULT);
+    ret = uv_run(loop, UV_RUN_DEFAULT);
+    if (ret != 0) {
+        return ret;
+    }
+    if (flg_has_error) {
+        return 1;
+    }
+    return 0;
 }
 
 /*****************************************************************************/
@@ -454,6 +515,7 @@ help(const char * progname)
     printf ("\t-a <addr>\tE-DIO24 device address\n");
     printf ("\t-t <port>\tE-DIO24 command (TCP) listen port\n");
     printf ("\t-u <port>\tE-DIO24 discover (UDP) listen port\n");
+    printf ("\t-m <time>\tthe seconds of timeout\n");
     printf ("\t-l\tSend out fail message randomly on requests.\n");
     printf ("\t-h\tPrint this message.\n");
     printf ("\t-v\tVerbose information.\n");
@@ -474,12 +536,14 @@ main(int argc, char * argv[])
     const char * host = "0.0.0.0";
     int port_udp = EDIO24_PORT_DISCOVER;
     int port_tcp = EDIO24_PORT_COMMAND;
+    time_t timeout = 0;
 
     int c;
     struct option longopts[]  = {
         { "address",      1, 0, 'a' },
         { "portudp",      1, 0, 'u' },
         { "porttcp",      1, 0, 't' },
+        { "timeout",      1, 0, 'm' },
 
         { "randomfail",   0, 0, 'l' },
 
@@ -490,6 +554,11 @@ main(int argc, char * argv[])
 
     while ((c = getopt_long( argc, argv, "a:u:t:lhv", longopts, NULL )) != EOF) {
         switch (c) {
+            case 'm':
+                if (strlen (optarg) > 0) {
+                    timeout = atoi(optarg);
+                }
+                break;
             case 'a':
                 if (strlen (optarg) > 0) {
                     host = optarg;
@@ -525,5 +594,5 @@ main(int argc, char * argv[])
     }
     (void)flg_verbose;
 
-    return main_svr(host, port_udp, port_tcp, flg_randfail);
+    return main_svr(host, port_udp, port_tcp, timeout, flg_randfail);
 }
