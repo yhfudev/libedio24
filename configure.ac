@@ -86,7 +86,7 @@ else
 fi
 if test "x$LIBUV_LIB_DIR" != "x" ; then
   LDFLAGS="-L${LIBUV_LIB_DIR} -luv ${LDFLAGS}"
-  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-L${LIBUV_LIB_DIR} -pthread])
+  AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-L${LIBUV_LIB_DIR} `pkg-config --libs uv` -pthread])
 else
   AC_CHECK_LIB([uv], [uv_tcp_init], [ LIBUVL='yes' ], AC_MSG_ERROR([Couldn't find libuv lib file ]), [-pthread])
 fi
