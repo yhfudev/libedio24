@@ -45,6 +45,8 @@ typedef struct _edio24cli_t {
     // TODO: a list of remote commands load from file?
     size_t num_requests; /**< the total number of requests sent */
     size_t num_responds; /**< the total number of responds received */
+    time_t starttime;
+    time_t timeout;
 
     size_t sz_data; /**< the lenght of data in the buffer */
     uint8_t buffer[EDIO24_PKT_LENGTH_MIN + 1024]; /**< the buffer to cache the received packets */
@@ -212,6 +214,7 @@ on_tcp_cli_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     if (g_edio24cli.num_responds >= g_edio24cli.num_requests) {
         fprintf(stderr,"tcp cli received responses(%" PRIuSZ ") exceed requests(%" PRIuSZ ")!\n", g_edio24cli.num_responds, g_edio24cli.num_requests);
         uv_close((uv_handle_t*)stream, on_tcp_cli_close);
+        raise(SIGINT); // send signal and handle by uv_signal_cb
     }
 }
 
@@ -462,13 +465,54 @@ on_udp_cli_send(uv_udp_send_t *req, int status)
     uv_udp_recv_start(req->handle, alloc_buffer, on_udp_cli_read);
 }
 
-int
-main_cli(const char * host, int port_udp, int port_tcp, char flg_discovery, const char * fn_conf)
+static char flg_has_error = 0;
+
+static void
+idle_cb (uv_idle_t *handle)
 {
+    time_t curtime;
+    time(&curtime);
+    if (g_edio24cli.starttime + g_edio24cli.timeout <= curtime) {
+        flg_has_error = 1;
+        uv_idle_stop(handle);
+        uv_stop(uv_default_loop());
+        fprintf(stderr, "timeout: %d\n", (int)g_edio24cli.timeout);
+    }
+}
+
+static void
+on_uv_close(uv_handle_t* handle)
+{
+    if (handle != NULL) {
+        //delete handle;
+    }
+}
+
+static void
+on_uv_walk(uv_handle_t* handle, void* arg)
+{
+    uv_close(handle, on_uv_close);
+}
+
+static void
+on_sigint_received(uv_signal_t *handle, int signum)
+{
+    int result = uv_loop_close(handle->loop);
+    if (result == UV_EBUSY) {
+        uv_walk(handle->loop, on_uv_walk, NULL);
+    }
+}
+
+int
+main_cli(const char * host, int port_udp, int port_tcp, time_t timeout, char flg_discovery, const char * fn_conf)
+{
+    int ret = 0;
     struct sockaddr_in broadcast_addr;
     struct sockaddr_in addr_udp;
     uv_udp_t uvudp;
     uint32_t connect_code = 0;
+    uv_idle_t idler;
+    uv_signal_t sigint;
 
     // setup service related info
     memset (&g_edio24cli, 0, sizeof (g_edio24cli));
@@ -481,6 +525,15 @@ main_cli(const char * host, int port_udp, int port_tcp, char flg_discovery, cons
 
     loop = uv_default_loop();
     assert (NULL != loop);
+
+    uv_signal_init(loop, &sigint);
+    uv_signal_start(&sigint, on_sigint_received, SIGINT);
+    if (timeout > 0) {
+        uv_idle_init(loop, &idler);
+        uv_idle_start(&idler, idle_cb);
+    }
+    time (&(g_edio24cli.starttime));
+    g_edio24cli.timeout = timeout;
 
     uv_tcp_init(loop, &(g_edio24cli.uvtcp));
     uv_tcp_keepalive(&(g_edio24cli.uvtcp), 1, 60);
@@ -504,7 +557,15 @@ main_cli(const char * host, int port_udp, int port_tcp, char flg_discovery, cons
     }
     uv_udp_send(&send_req, &uvudp, &msg, 1, (const struct sockaddr *)&addr_udp, on_udp_cli_send);
 
-    return uv_run(loop, UV_RUN_DEFAULT);
+    ret = uv_run(loop, UV_RUN_DEFAULT);
+    // uv_signal_stop(&sigint);
+    if (ret != 0) {
+        return ret;
+    }
+    if (flg_has_error) {
+        return 1;
+    }
+    return 0;
 }
 
 /*****************************************************************************/
@@ -525,6 +586,7 @@ help(const char * progname)
     printf ("\t-t <port>\tE-DIO24 command (TCP) listen port\n");
     printf ("\t-u <port>\tE-DIO24 discover (UDP) listen port\n");
     printf ("\t-e <cmd file>\tExecute the command lines in the file\n");
+    printf ("\t-m <time>\tthe seconds of timeout\n");
     printf ("\t-d\tDiscovery devices\n");
     printf ("\t-h\tPrint this message.\n");
     printf ("\t-v\tVerbose information.\n");
@@ -546,6 +608,7 @@ main(int argc, char * argv[])
     int port_udp = EDIO24_PORT_DISCOVER;
     int port_tcp = EDIO24_PORT_COMMAND;
     const char * fn_conf = NULL;
+    time_t timeout = 0;
 
     int c;
     struct option longopts[]  = {
@@ -554,14 +617,20 @@ main(int argc, char * argv[])
         { "porttcp",      1, 0, 't' },
         { "execute",      1, 0, 'e' },
         { "discovery",    0, 0, 'd' },
+        { "timeout",      1, 0, 'm' },
 
         { "help",         0, 0, 'h' },
         { "verbose",      0, 0, 'v' },
         { 0,              0, 0,  0  },
     };
 
-    while ((c = getopt_long( argc, argv, "r:u:t:e:dhv", longopts, NULL )) != EOF) {
+    while ((c = getopt_long( argc, argv, "r:u:t:e:m:dhv", longopts, NULL )) != EOF) {
         switch (c) {
+            case 'm':
+                if (strlen (optarg) > 0) {
+                    timeout = atoi(optarg);
+                }
+                break;
             case 'r':
                 if (strlen (optarg) > 0) {
                     host = optarg;
@@ -602,5 +671,5 @@ main(int argc, char * argv[])
     }
     (void)flg_verbose;
 
-    return main_cli(host, port_udp, port_tcp, flg_discovery, fn_conf);
+    return main_cli(host, port_udp, port_tcp, timeout, flg_discovery, fn_conf);
 }
