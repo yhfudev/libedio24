@@ -1,6 +1,6 @@
 environment:
   CYG_MIRROR: http://cygwin.mirror.constant.com
-  CYG_PACKAGES: make,gcc-core,pkgconfig
+  CYG_PACKAGES: make,gcc-core,pkg-config
   DOCUMENT_FOLDER: /usr/local/share/doc/romancal
   matrix:
     - MSYSTEM: MINGW64
@@ -40,6 +40,7 @@ install:
   - if defined MSYSTEM (%BASH% -lc "yes | pacman -Sy")
   - if defined MSYSTEM (%BASH% -lc "yes | pacman -S bash pacman --noconfirm --needed")
   - if defined MSYSTEM (%BASH% -lc "yes | pacman -Su --noconfirm")
+  - if defined MSYSTEM (%BASH% -lc "yes | pacman -S pkg-config --noconfirm --needed")
   # the following line is not a duplicate line:
   # it is necessary to upgrade the MSYS base files and after that all the packages
   # the 2 separate commands/lines are required because a new shell is necessary for each step
