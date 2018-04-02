@@ -1,6 +1,6 @@
 environment:
   CYG_MIRROR: http://cygwin.mirror.constant.com
-  CYG_PACKAGES: make,gcc-core
+  CYG_PACKAGES: make,gcc-core,pkgconfig
   DOCUMENT_FOLDER: /usr/local/share/doc/romancal
   matrix:
     - MSYSTEM: MINGW64
