@@ -1398,6 +1398,11 @@ edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in,
     uint32_t sz_data;
     uint16_t len_data; /**< the byte size for data */
 
+    if (NULL == buffer_in) {
+        fprintf(stderr, "edio24 warning: buffer NULL.\n");
+        return -1;
+    }
+
     if (NULL == sz_processed) {
         return -1;
     }
@@ -1410,10 +1415,7 @@ edio24_svr_process_tcp(char flg_force_fail, uint8_t * buffer_in, size_t sz_in,
         return -1;
     }
     *sz_needed_out = 0;
-    if (NULL == buffer_in) {
-        fprintf(stderr, "edio24 warning: buffer NULL.\n");
-        return -1;
-    }
+
     // check the mininal size of packet
     if (sz_in < MSG_INDEX_DATA + 1) {
         assert (sz_needed_in);

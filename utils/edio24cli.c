@@ -378,11 +378,12 @@ process_command(off_t pos, char * buf, size_t size, void *userdata)
         count = strtol(buf + sizeof(CSTR_CUR_COMMAND), &endptr, 10);
         fprintf(stderr, "tcp cli sleep %" PRIiSZ " microseconds ...\n", count);
         usleep (count); /* Yes, I know we should use libuv's timeout callback here */
+        ret = 0;
 #undef CSTR_CUR_COMMAND
     }
     if (ret < 0) {
         fprintf(stderr, "tcp cli ignore line at pos(%ld): %s\n", pos, buf);
-        return -1;
+        return 0;
     }
     fprintf(stderr, "tcp cli created packet size=%" PRIiSZ ":\n", ret);
     hex_dump_to_fd(STDERR_FILENO, (opaque_t *)(buffer1), ret);

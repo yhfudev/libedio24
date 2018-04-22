@@ -1,8 +1,8 @@
 /**
- * @file    libedio24.h
- * @brief   The E-DIO24 Controller Ethernet Driver
- * @author  Yunhui Fu <yhfudev@gmail.com>
- * @version 1.0
+ * \file    libedio24.h
+ * \brief   The E-DIO24 Controller Ethernet Driver
+ * \author  Yunhui Fu <yhfudev@gmail.com>
+ * \version 1.0
  */
 #ifndef _LIBEDIO24_H
 #define _LIBEDIO24_H 1

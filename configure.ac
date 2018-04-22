@@ -125,10 +125,10 @@ AC_ARG_WITH(ciut-include,
             [CIUT_INC_DIR="${withval}"],)
 if test "x$CIUT_INC_DIR" != "x" ; then
   CFLAGS="-I${CIUT_INC_DIR} ${CFLAGS}"
-  SAVE_CPPFLAGS="$CPPFLAGS"
-  CPPFLAGS="$CPPFLAGS -I${CIUT_INC_DIR}"
+  #SAVE_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="-I${CIUT_INC_DIR} $CXXFLAGS"
   AC_CHECK_HEADERS([ciut.h], [ LIBCIUTH='yes' ], AC_MSG_ERROR([Couldn't find ciut header ]), [])
-  CPPFLAGS="$SAVE_CPPFLAGS"
+  #CXXFLAGS="$SAVE_CXXFLAGS"
 fi
 if test "x$CIUT_LIB_DIR" != "x" ; then
   LDFLAGS="-L${CIUT_LIB_DIR} ${LDFLAGS}"
