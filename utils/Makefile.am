@@ -92,26 +92,26 @@ dummy.cpp:
 clean-local-dummy:
 	-rm -rf dummy.cpp
 
-ciutexe.c:
+ciutexec.c:
 	-echo "#define CIUT_PLACE_MAIN 1" > $@
 	-echo "#include <ciut.h>" >> $@
 	-echo "#include \"../src/libedio24.c\"" >> $@
 	-echo "int main(int argc, const char * argv[]) { return ciut_main(argc, argv); }" >> $@
 clean-local-check:
-	-rm -rf ciutexe.c
+	-rm -rf ciutexec.c
 
 clean-local: clean-local-check clean-local-dummy
 
 
-#noinst_PROGRAMS=ciutexe
-TESTS=ciutexe
-check_PROGRAMS=ciutexe
+#noinst_PROGRAMS=ciutexec
+TESTS=ciutexec
+check_PROGRAMS=ciutexec
 bin_PROGRAMS=edio24cli edio24sim gencctcmd
 
 
-ciutexe_LDADD = -luv
-ciutexe_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
-ciutexe_LDFLAGS = $(AM_LDFLAGS)
+ciutexec_LDADD = -luv
+ciutexec_CFLAGS = -DCIUT_ENABLED=1 $(AM_CFLAGS)
+ciutexec_LDFLAGS = $(AM_LDFLAGS)
 
 
 gencctcmd_SOURCES= \
@@ -119,10 +119,10 @@ gencctcmd_SOURCES= \
     utils.c \
     $(NULL)
 
-ciutexe_SOURCES= \
+ciutexec_SOURCES= \
     gencctcmd.c \
     utils.c \
-    ciutexe.c \
+    ciutexec.c \
     $(NULL)
 
 edio24cli_SOURCES= \
